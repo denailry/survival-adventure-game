@@ -169,11 +169,11 @@
 		reset_row(MinNumber, V).
 	/*Look*/
 	print_batas_brs(N,Max,Max):- 
-		elmt(N,Max,H), 
+		elmt_map(N,Max,H), 
 		write(H) ,
 		nl.
 	print_batas_brs(N,Min,Max) :- 
-		elmt(N,Min,H), 
+		elmt_map(N,Min,H), 
 		write(H), 
 		I is Min +1 , 
 		print_batas_brs(N,I,Max),!.
@@ -205,12 +205,12 @@
 			set_map_el(X, Y, 'F'),
 			put_foods(Foods).
 		is_player_on_food([]) :- !, fail.
-		is_player_on_food([Food|Foods]) :-
+		is_player_on_food([Food|_]) :-
 			player_point(PRow, PColumn),
 			food_point(Food, Row, Column),
 			is_coor_equal([PRow,PColumn],[Row,Column]), 
 			!.
-		is_player_on_food([Food|Foods]) :-
+		is_player_on_food([_|Foods]) :-
 			is_player_on_food(Foods).
 
 	/* Water Object */
@@ -237,8 +237,8 @@
 			water_point(W, Row, Column),
 			is_coor_equal([PRow,PColumn],[Row,Column]), 
 			!.
-		is_player_on_water([Food|Foods]) :-
-			is_player_on_water(Foods).
+		is_player_on_water([W|Waters]) :-
+			is_player_on_water(Waters).
 
 	/* Medicine Object */
 		medicine_power(40).
@@ -549,6 +549,16 @@
 		status_inventory([Item|Inventory]) :-
 			write(Item), write(' '),
 			status_inventory(Inventory).
+		drop_item(Item) :-
+			player_inventory(Inventory),
+			length(Inventory, Len),
+			Len > 0,
+			select(Item,Inventory,LAfter),
+			set_player_inventory(LAfter),
+			!.
+		drop_item(Item) :- 
+			!, 
+			fail.
 
 /*Command-Command utama*/
 	start:- 
@@ -731,3 +741,57 @@
 		write('Thirst    : '), write(Thirst), nl,
 		write('Weapon    : '), status_weapon(Weapon), nl,
 		write('Inventory : '), status_inventory(Inventory), nl.
+	drop(Object) :-
+		Object == 'M',
+		medicine_list(Medicines),
+		is_player_on_medicine(Medicines),
+		take_item('M'),
+		player_point(X,Y),
+		select([X,Y],Medicines,LAfter),
+		set_medicines(LAfter),
+		write('Medicine has been dropped.\n'),
+		!.
+	drop(Object) :-
+		Object == 'F',
+		player_inventory(Inventory),
+		food_list(Foods),
+		member(Object,Inventory),
+		drop_item('F'), 
+		player_point(X,Y),
+		set_foods([[X,Y]|Foods]),
+		write('Food has been dropped.\n'),
+		!.
+	drop(Object) :-
+		Object == 'W',
+		player_inventory(Inventory),
+		water_list(Water),
+		member(Object,Inventory),
+		drop_item('W'), 
+		player_point(X,Y),
+		set_water([[X,Y]|Water]),
+		write('Water has been dropped.\n'),
+		!.
+	drop(Object) :-
+		Object == '#',
+		player_inventory(Inventory),
+		weapon_list(Weapons),
+		member(Object,Inventory),
+		drop_item('#'), 
+		player_point(X,Y),
+		set_weapons([[X,Y]|Weapons]),
+		write('Weapon has been dropped.\n'),
+		!.
+	drop(Object) :-
+		Object == 'M',
+		player_inventory(Inventory),
+		medicine_list(Medicines),
+		member(Object,Inventory),
+		drop_item('M'), 
+		player_point(X,Y),
+		set_medicines([[X,Y]|Medicines]),
+		write('Weapon has been dropped.\n'),
+		!.
+	drop(Object) :-
+		write('No object dropped.\n'),
+		!,
+		fail.
