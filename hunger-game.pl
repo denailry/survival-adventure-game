@@ -7,8 +7,12 @@
 */
 :- dynamic(peta/1).
 :- dynamic(baris/2).
+:- dynamic(player_health/1).
 :- dynamic(player_point/2).
 :- dynamic(player_inventory/1).
+:- dynamic(player_weapon/1).
+:- dynamic(enemy_list/1).
+:- dynamic(enemy_point/2).
 
 /* Primitif Global */
 	/* Primitif List */
@@ -97,6 +101,8 @@
 	redraw_map :-
 		reset_row(1,11),
 		put_player,
+		hole_list(Holes),
+		put_holes(Holes),
 		weapon_list(Weapons),
 		put_weapons(Weapons),
 		water_list(Water),
@@ -133,6 +139,7 @@
 
 /* Primitif Object Game */
 	/* Food Object */
+		food_power(30).
 		food_list([
 			[3,1],[7,1],[8,1],[5,5],
 			[5,7],[3,8],[2,10],[5,11],
@@ -145,7 +152,7 @@
 		food_point(Food, X, Y) :-
 			nth0(0, Food, X),
 			nth0(1, Food, Y).
-		put_foods([]).
+		put_foods([]) :- !.
 		put_foods([F|Foods]) :-
 			food_point(F, X, Y),
 			set_map_el(X, Y, 'F'),
@@ -160,6 +167,7 @@
 			is_player_on_food(Foods).
 
 	/* Water Object */
+		water_power(30).
 		water_list([
 			[3,2],[9,1],[2,5],[6,7],
 			[8,10],[4,12],[5,12],[4,13],
@@ -171,7 +179,7 @@
 		water_point(Water, X, Y) :-
 			nth0(0, Water, X),
 			nth0(1, Water, Y).
-		put_water([]).
+		put_water([]) :- !.
 		put_water([W|Water]) :-
 			water_point(W, X, Y),
 			set_map_el(X, Y, 'W'),
@@ -186,6 +194,7 @@
 			is_player_on_water(Foods).
 
 	/* Medicine Object */
+		medicine_power(40).
 		medicine_list([
 			[2,3],[8,4],[10,6],
 			[6,8],[9,10],[3,11],
@@ -197,7 +206,7 @@
 		medicine_point(Medicine, X, Y) :-
 			nth0(0, Medicine, X),
 			nth0(1, Medicine, Y).
-		put_medicines([]).
+		put_medicines([]) :- !.
 		put_medicines([M|Medicines]) :-
 			medicine_point(M, X, Y),
 			set_map_el(X, Y, 'M'),
@@ -213,15 +222,25 @@
 
 	/* Weapon Object */
 		weapon_list([
-			[5,1],[1,3],[5,8],
-			[7,10],[6,12],[9,16],
-			[10,19],[8,20],[1,20]]).
+			[1, 10, [5,1]],
+			[2, 20, [1,3]],
+			[3, 30, [5,8]],
+			[4, 40, [7,10]],
+			[5, 50, [6,12]],
+			[6, 60, [9,16]],
+			[7, 70, [10,19]],
+			[8, 80, [8,20]],
+			[9, 90, [1,20]]
+			]).
 		set_weapons(Weapons) :-
 			retract(weapon_list(_)),
 			asserta(weapon_list(Weapons)).
+		weapon_point(Weapon, Point) :-
+			nth0(2, Weapon, Point).
 		weapon_point(Weapon, X, Y) :-
-			nth0(0, Weapon, X),
-			nth0(1, Weapon, Y).
+			weapon_point(Weapon, Point),
+			nth0(0, Point, X),
+			nth0(1, Point, Y).
 		put_weapons([]) :- !.
 		put_weapons([W|Weapons]) :-
 			weapon_point(W, X, Y),
@@ -253,6 +272,11 @@
 		hole_point(Hole, X, Y) :-
 			nth0(0, Hole, X),
 			nth0(1, Hole, Y).
+		put_holes([]) :- !.
+		put_holes([H|Holes]) :-
+			hole_point(H, X, Y),
+			set_map_el(X, Y, 'X'),
+			put_holes(Holes).
 		is_object_on_hole([], Point) :- !, fail.
 		is_object_on_hole([Hole|Holes], Point) :-
 			hole_point(Hole, Row, Column),
@@ -261,12 +285,22 @@
 		is_object_on_hole([Hole|Holes], Point) :-
 			is_player_on_hole(Holes, Point).
 	/* Enemy Object */
-		enemy_list([]).
+		enemy1(1, 100, 10, [0,0]).
+		enemy2(1, 100, 10, [0,0]).
+		enemy3(1, 100, 10, [0,0]).
+		enemy4(1, 100, 10, [0,0]).
+		enemy4(2, 120, 20, [0,0]).
+		enemy5(2, 120, 20, [0,0]).
+		enemy6(2, 120, 20, [0,0]).
+		enemy7(3, 150, 30, [0,0]).
+		enemy8(3, 150, 30, [0,0]).
+		enemy9(3, 150, 30, [0,0]).
+		enemy10(4, 200, 50, [0,0]).
 		set_enemies(Enemies) :-
 			retract(enemy_list(_)),
 			asserta(enemy_list(Enemies)).
 		enemy_point(Enemy, Point) :-
-			nth0(0, Enemy, Point).
+			nth0(3, Enemy, Point).
 		enemy_point(Enemy, X, Y) :-
 			enemy_point(Enemy, Point),
 			nth0(0, Point, X),
@@ -274,7 +308,8 @@
 		/* Randomized Enemies Location */
 		init_enemies(EnemyNumber) :-
 			init_enemies(EnemyNumber, [], List),
-			asserta(enemyList(List)).
+			asserta(enemy_list(List)),
+			!.
 		init_enemies(0, List, List) :- !.
 		init_enemies(EnemyNumber, Temp, List) :-
 			random(1, 10, Row),
@@ -289,13 +324,30 @@
 		/* Avoid same enemies location when initialization */ 
 		validate_pos(Point, [Enemy|EnemyList]) :-
 			enemy_point(Enemy, EnemyPoint),
-			is_coor_equal(Point, EnemyPoint).
-		put_enemies([]).
+			is_coor_equal(Point, EnemyPoint),
+			hole_list(Holes),
+			\is_object_on_hole(Holes, Point).
+		put_enemies([]) :- !.
 		put_enemies([E|Enemies]) :-
-			absis_enemy(E, X),
-			ordinat_enemy(E, Y),
+			length(Enemies, Len),
+			enemy_point(E, X, Y),
 			set_map_el(X, Y, 'E'),
 			put_enemies(Enemies).
+		trigger_enemy([E|Enemies]) :-
+			player_point(Row, Column),
+			enemy_point(E, Point),
+			is_coor_equal(Point, [Row, Column]),
+			attack_player(E),
+			trigger_enemy(Enemies),
+			!.
+		trigger_enemy([E|Enemies]) :-
+			random(1,4,Direction),
+			move_enemy(E, Direction),
+			!.
+		trigger_enemy([E|Enemies]) :-
+			trigger_enemy([E|Enemies]).
+
+
 	/* Player Object */
 		player_health(100).
 		player_hunger(100).
@@ -303,6 +355,7 @@
 		player_point(1,1).
 		player_inventory([]).
 		player_capacity(5).
+		player_weapon([0, 0, [0,0]]).
 		set_player_health(Health) :-
 			retract(player_health(_)),
 			asserta(player_health(Health)).
@@ -318,6 +371,9 @@
 		set_player_inventory(Inventory) :-
 			retract(player_inventory(_)),
 			asserta(player_inventory(Inventory)).
+		set_player_weapon(Weapon) :-
+			retract(player_weapon(_)),
+			asserta(player_weapon(Weapon)).
 		put_player :-
 			player_point(X, Y),
 			set_map_el(X, Y, 'P').
@@ -335,9 +391,9 @@
 
 /*Command-Command utama*/
 	start:- 
-		redraw_map,
 		set_player_point(1,1),
-		init_enemies(10).
+		init_enemies(10),
+		redraw_map.
 	help :- 
 		write('Available commands:\n'),
 		write('start. -- start the game!\n'),
@@ -419,3 +475,52 @@
 		write('No object taken.\n'),
 		!,
 		fail.
+	use(Object) :-
+		Object == 'M',
+		medicine_power(Power),
+		player_health(CurrentHealth),
+		Health is Power+CurrentHealth,
+		set_player_health(Health),
+		write('Increased health by '),
+		write(Power),
+		nl,
+		!.
+	use(Object) :-
+		Object == 'F',
+		food_power(Power),
+		player_hunger(CurrentHunger),
+		Hunger is Power+CurrentHunger,
+		set_player_hunger(Hunger),
+		write('Increased hunger by '),
+		write(Power),
+		nl,
+		!.
+	use(Object) :-
+		Object == 'W',
+		water_power(Power),
+		player_thirst(CurrentThirst),
+		Thirst is Power+CurrentThirst,
+		set_player_thirst(Thirst),
+		write('Increased thirst by '),
+		write(Power),
+		nl,
+		!.
+	use(Object) :-
+		Object == '#',
+		change_weapon,
+		!.
+	use(Object) :-
+		write('No action.\n'),
+		!,
+		fail.
+	status :-
+		player_health(Health),
+		player_hunger(Hunger),
+		player_thirst(Thirst),
+		player_weapon(Weapon),
+		player_inventory(Inventory),
+		write('Health    : '), write(Health), nl,
+		write('Hunger    : '), write(Hunger), nl,
+		write('Thirst    : '), write(Thirst), nl,
+		write('Weapon    : '), status_weapon(Weapon), nl,
+		write('Inventory : '), status_inventory(Inventory), nl.
