@@ -5,274 +5,417 @@
 				Dimas Aditia Pratikto
 				Luthfi Ahmad Mujahid Hadiana
 */
-
-/* Setter Getter Map */
-set_map(_) :-
-    retract(gameMap(_)),
-    fail.
-set_map(M) :-
-    asserta(gameMap(M)).
-get_map(M) :-
-    gameMap(M).
-
-/* Setter Getter List Food pada Game */
-set_foods(_) :-
-	retract(foodList(_)),
-	fail.
-set_foods(L) :-
-	asserta(foodList(M)).
-get_foods(L) :-
-	foodList(L).
-absis_food(Food, X) :-
-	nth0(1, Food, X).
-ordinat_food(Food, Y) :-
-	nth0(2, Food, Y).
-
-/* Setter Getter List Water pada Game  */
-set_water(_) :-
-	retract(waterList(_)),
-	fail.
-set_water(L) :-
-	asserta(waterList(M)).
-get_water(L) :-
-	waterList(L).
-absis_water(Water, X) :-
-	nth0(1, Water, X).
-ordinat_water(Water, Y) :-
-	nth0(2, Water, Y).
-
-/* Setter Getter List Medicine pada Game */
-set_medicines(_) :-
-	retract(medicineList(_)),
-	fail.
-set_medicines(L) :-
-	asserta(medicineList(M)).
-get_medicines(L) :-
-	medicineList(L).
-absis_medicine(Medicine, X) :-
-	nth0(1, Medicine, X).
-ordinat_medicine(Medicine, Y) :-
-	nth0(2, Medicine, Y).
-
-/* Setter Getter List Weapon pada Game */
-set_weapons(_) :-
-	retract(weaponList(_)),
-	fail.
-set_weapons(L) :-
-	asserta(weaponList(M)).
-get_weapons(L) :-
-	weaponList(L).
-absis_weapon(Weapon, X) :-
-	nth0(1, Weapon, X).
-ordinat_medicine(Weapon, Y) :-
-	nth0(2, Weapon, Y).
-
-/* Setter Getter List Enemy pada Game */
-set_enemies(_) :-
-	retract(enemyList(_)),
-	fail.
-set_enemies(E) :-
-	asserta(enemyList(E)).
-get_enemies(E) :-
-	enemyList(E).
-point_enemy(Enemy, Point) :-
-	nth0(1, Enemy, Point).
-
-/* Setter Getter Player */
-set_player(_) :-
-	retract(player(_)),
-	fail.
-set_player(Health, Hunger, Thirst, Weapon, Inventory) :-
-	asserta(player(Health, Hunger, Thirst, Weapon, Inventory)).
-get_player(Health, Hunger, Thirst, Weapon, Inventory) :-
-	player(Health, Hunger, Thirst, Weapon, Inventory).
-set_player_health(Health) :-
-	retract(player_health(_)),
-	asserta(player_health(Health)).
-get_player_health(Health) :-
-	player_health(Health).
-set_player_hunger(Hunger) :-
-	retract(player_hunger(_)),
-	asserta(player_hunger(Hunger)).
-get_player_hunger(Hunger) :-
-	player_hunger(Hunger).
-set_player_thirst(Thirst) :-
-	retract(player_thrist(_)),
-	asserta(player_thirst(Thirst)).
-get_player_thirst(Thirst) :-
-	player_thirst(Thirst).
-set_player_point(Point) :-
-	retract(player_point(Point)),
-	asserta(player_point(Point)).
-get_player_point(Point) :-
-	player_point(Point).
-set_player_inventory(Inventory) :-
-	retract(player_inventory(_)),
-	asserta(player_inventory(Inventory)).
-
-/* Setter Getter Hole */
-set_holes(_) :-
-	retract(holes(_)),
-	fail.
-set_holes(H) :-
-	asserta(holes(H)).
-get_holes(H) :-
-	holes(H).
-
-/* Setter Getter Game State */
-set_state(S) :-
-	asserta(is_running(S)).
-get_state(S) :-
-	is_running(S).
-
 :- dynamic(peta/1).
 :- dynamic(baris/2).
+:- dynamic(player_point/2).
+:- dynamic(player_inventory/1).
 
-/*Inisialisasi Baris (Fakta Baris)*/
-baris(1,[?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?]).
-baris(2,[?,p,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(3,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(4,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(5,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(6,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(7,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(8,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(9,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(10,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(11,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
-baris(12,[?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?]).
-/*Append ke dalam list*/
-bikinMap(0,[]).
-bikinMap(X,M):- 
-    baris(X,L) ,
-    C is X-1,bikinMap(C,U),
-    append(U,[L],M), !.
-initPeta:-bikinMap(12,M),asserta(peta(M)),!.
-updatePeta :- retract(peta(_)) , bikinMap(12,M),asserta(peta(M)),!.
-/*Selektor Element Peta*/
-elmt(I, J , X) :-
-    peta(Matrix),
-    nth0(I, Matrix, Row),
-    nth0(J, Row, X).
-/*Ubah Isi List*/
-splitL(X,0,[],X).
-splitL([H|L],X,A,B) :-  C is X-1 , splitL(L,C,M,B) , append([H],M,A) ,!.
-delLast([_|[]],[]).
-delLast([H|L],X) :- delLast(L,Y) , append([H],Y,X),!.
-change(L1, I , Value, L2) :- splitL(L1,I,M,N) ,delLast(M,X), append(X,[Value],Z) , append(Z,N,L2).
+/* Primitif Global */
+	/* Primitif List */
+		/*Ubah Isi List*/
+		splitL(X,0,[],X).
+		splitL([H|L],X,A,B) :-  
+			C is X-1 , 
+			splitL(L,C,M,B) , 
+			append([H],M,A) ,!.
+		/*delLast(M,X) */
+		delLast([_|[]],[]).
+		delLast([H|L],X) :- 
+			delLast(L,Y) , 
+			append([H],Y,X),!.
+		/*change(L1, I , Value, L2) Mengubah Nilai L1 indeks ke I dengan value lalu disimpan di L2*/ 					
+		change(L1, I , Value, L2) :-
+			splitL(L1,I,M,N) ,
+			delLast(M,X), 
+			append(X,[Value],Z) , 
+			append(Z,N,L2).
+	/* Setter Getter Game State */
+		is_running(0).
+		set_state(S) :-
+			retract(is_running(_)),
+			asserta(is_running(S)).
+	/* Others */
+		/* True when two points is same */
+		is_coor_equal([],[]).
+		is_coor_equal([X|P1], [X|P2]) :-
+			is_coor_equal(P1,P2).	
 
-/*Setter Element Peta*/
-set(I,J,X) :- Brs is I+1 , Kol is J+1 , baris(Brs,L1) , change(L1,Kol,X,L2) , retract(baris(Brs,_)) ,asserta(baris(Brs,L2)),updatePeta,!.
 
-/*Print Peta*/
-printMatriks([]).
-printMatriks([A|B]) :-
- printBar(A),
- printMatriks(B).
-printBar([H|T]) :-
- write(H),
- printBar(T).
-printBar([]) :- nl.
-printPeta :- peta(M) , printMatriks(M).
+/* Primitif Map Game*/
+	/*Inisialisasi Baris (Fakta Baris)*/
+	baris(1,[?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?]).
+	baris(2,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(3,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(4,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(5,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(6,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(7,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(8,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(9,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(10,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(11,[?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?]).
+	baris(12,[?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?]).
+	/*Append ke dalam list*/
+	create_map(0,[]).
+	create_map(X,M):- 
+		baris(X,L) ,
+		C is X-1,create_map(C,U),
+		append(U,[L],M), !.
+	/*Init Peta*/
+	init_map:-
+		create_map(12,M),
+		asserta(peta(M)),!.
+	/*Update Peta setelah terjadi perubahan*/
+	update_map :- 
+		retract(peta(_)) , 
+		create_map(12,M),
+		asserta(peta(M)),!.
+	/*Selektor Element Peta*/
+	elmt_map(I, J , X) :-
+		peta(Matrix),
+		nth0(I, Matrix, Row),
+		nth0(J, Row, X).
+	/*Setter Element Peta*/
+	set_map_el(I,J,X) :- 
+		Brs is I+1 , 
+		Kol is J+1 , 
+		baris(Brs,L1) , 
+		change(L1,Kol,X,L2) , 
+		retract(baris(Brs,_)) ,
+		asserta(baris(Brs,L2)),
+		update_map,!.
+	/*Print Peta*/
+	print_matriks([]) :- !.
+	print_matriks([A|B]) :-
+	 	print_bar(A),
+	 	print_matriks(B), !.
+	print_bar([H|T]) :-
+	 	write(H),
+	 	print_bar(T), !.
+	print_bar([]) :- nl, !.
+	/* Reset map and put all of game objects on the map */
+	redraw_map :-
+		reset_row(1,11),
+		put_player,
+		weapon_list(Weapons),
+		put_weapons(Weapons),
+		water_list(Water),
+		put_water(Water),
+		food_list(Foods),
+		put_foods(Foods),
+		medicine_list(Medicines),
+		put_medicines(Medicines),
+		enemy_list(Enemies),
+		put_enemies(Enemies).
+	reset_row(MinNumber, MinNumber) :-
+		init_map, !.
+	reset_row(MinNumber, Indexer) :-
+		retract(baris(Indexer, _)),
+		asserta(baris(Indexer, [?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?])),
+		V is Indexer-1,
+		reset_row(MinNumber, V).
+	/*Look*/
+	print_batas_brs(N,Max,Max):- 
+		elmt(N,Max,H), 
+		write(H) ,
+		nl.
+	print_batas_brs(N,Min,Max) :- 
+		elmt(N,Min,H), 
+		write(H), 
+		I is Min +1 , 
+		print_batas_brs(N,I,Max),!.
+	print_batas_mapk(MaxBrs , MaxBrs , MinKol,MaxKol) :- 
+		print_batas_brs(MaxBrs,MinKol,MaxKol).
+	print_batas_mapk(MinBrs , MaxBrs , MinKol,MaxKol) :- 
+		print_batas_brs(MinBrs, MinKol,MaxKol), 
+		I is MinBrs +1 , 
+		print_batas_mapk(I , MaxBrs , MinKol,MaxKol),!.
 
-/* Menampilkan daftar perintah yang dapat dieksekusi */
-help.
+/* Primitif Object Game */
+	/* Food Object */
+		food_list([
+			[3,1],[7,1],[8,1],[5,5],
+			[5,7],[3,8],[2,10],[5,11],
+			[8,11],[7,14],[4,14],[2,15],
+			[4,17],[8,19],[5,20],[6,20]
+			]).
+		set_foods(Foods) :-
+			retract(food_list(_)),
+			asserta(food_list(Foods)).
+		food_point(Food, X, Y) :-
+			nth0(0, Food, X),
+			nth0(1, Food, Y).
+		put_foods([]).
+		put_foods([F|Foods]) :-
+			food_point(F, X, Y),
+			set_map_el(X, Y, 'F'),
+			put_foods(Foods).
+		is_player_on_food([]) :- !, fail.
+		is_player_on_food([Food|Foods]) :-
+			player_point(PRow, PColumn),
+			food_point(Food, Row, Column),
+			is_coor_equal([PRow,PColumn],[Row,Column]), 
+			!.
+		is_player_on_food([Food|Foods]) :-
+			is_player_on_food(Foods).
 
-/* Memulai permainan */
-start :-
-	set_player(100, 100, 100, 0, [2,2]),
-	set_foods([[4,2],[8,2],[9,2],[6,6],[6,8],[4,9],[3,11],[6,12],[9,12],[8,15],[5,15],[3,16],[5,18],[9,20],[6,21],[7,21]]),
-	set_medicines([[3,4],[9,5],[11,7],[7,9],[10,11],[4,12],[6,16],[10,16],[3,21]]),
-	set_water([[4,3],[10,1],[3,6],[7,8],[9,11],[5,13],[6,13],[5,14],[6,14],[3,18],[8,20],[8,21]]),
-	set_weapons([[6,2],[2,4],[6,9],[8,11],[7,13],[10,17],[11,20],[9,21],[2,21]]),
-	set_hole([[6,5],[7,5],[10,5],[10,6],[10,7],[8,7],[7,7],[6,7],[5,7],[5,8],[5,9],[8,8],[2,12],[2,13],[9,13],[9,14],[9,15],[6,17],[5,17],[4,17],[7,19],[8,19],[7,20],[6,20],[5,20],[5,21]]),
-	init_enemies(10),
-	help.
+	/* Water Object */
+		water_list([
+			[3,2],[9,1],[2,5],[6,7],
+			[8,10],[4,12],[5,12],[4,13],
+			[5,13],[2,17],[7,19],[7,20]
+			]).
+		set_water(Water) :-
+			retract(water_list(_)),
+			asserta(water_list(Water)).
+		water_point(Water, X, Y) :-
+			nth0(0, Water, X),
+			nth0(1, Water, Y).
+		put_water([]).
+		put_water([W|Water]) :-
+			water_point(W, X, Y),
+			set_map_el(X, Y, 'W'),
+			put_water(Water).
+		is_player_on_water([]) :- !, fail.
+		is_player_on_water([W|Water]) :-
+			player_point(PRow, PColumn),
+			water_point(W, Row, Column),
+			is_coor_equal([PRow,PColumn],[Row,Column]), 
+			!.
+		is_player_on_water([Food|Foods]) :-
+			is_player_on_water(Foods).
 
-init_enemies(EnemyNumber) :-
-	init_enemies(EnemyNumber, [], List),
-	asserta(enemyList(List)),
-	write(List),
-	nl.
-init_enemies(0, List, List) :- !.
-init_enemies(EnemyNumber, Temp, List) :-
-	random(2, 12, Row),
-	random(2, 21, Column),
-	validate_pos([Row,Column], Temp), !,
-	init_enemies(EnemyNumber, [[Row,Column]|Temp], List).
-init_enemies(EnemyNumber, Temp, List) :-
-	N is EnemyNumber-1,
-	random(2, 12, Row),
-	random(2, 21, Column),
-	init_enemies(N, [[Row,Column]|Temp], List).
-validate_pos(Point, [Enemy|EnemyList]) :-
-	point_enemy(Enemy, EnemyPoint),
-	is_coor_equal(Point, EnemyPoint).
+	/* Medicine Object */
+		medicine_list([
+			[2,3],[8,4],[10,6],
+			[6,8],[9,10],[3,11],
+			[5,15],[9,15],[2,20]
+			]).
+		set_medicines(Medicines) :-
+			retract(medicine_list(_)),
+			asserta(medicine_list(Medicines)).
+		medicine_point(Medicine, X, Y) :-
+			nth0(0, Medicine, X),
+			nth0(1, Medicine, Y).
+		put_medicines([]).
+		put_medicines([M|Medicines]) :-
+			medicine_point(M, X, Y),
+			set_map_el(X, Y, 'M'),
+			put_medicines(Medicines).
+		is_player_on_medicine([]) :- !, fail.
+		is_player_on_medicine([Medicine|Medicines]) :-
+			player_point(PRow, PColumn),
+			medicine_point(Medicine, Row, Column),
+			is_coor_equal([PRow,PColumn],[Row,Column]), 
+			!.
+		is_player_on_medicine([Medicine|Medicines]) :-
+			is_player_on_medicine(Medicines).
 
-/* Mengakhiri permainan */
-quit :-
-	set_state(0),
-	write('Keluar dari permainan.').
+	/* Weapon Object */
+		weapon_list([
+			[5,1],[1,3],[5,8],
+			[7,10],[6,12],[9,16],
+			[10,19],[8,20],[1,20]]).
+		set_weapons(Weapons) :-
+			retract(weapon_list(_)),
+			asserta(weapon_list(Weapons)).
+		weapon_point(Weapon, X, Y) :-
+			nth0(0, Weapon, X),
+			nth0(1, Weapon, Y).
+		put_weapons([]) :- !.
+		put_weapons([W|Weapons]) :-
+			weapon_point(W, X, Y),
+			set_map_el(X, Y, '#'),
+			put_weapons(Weapons).
+		is_player_on_weapon([]) :- !, fail.
+		is_player_on_weapon([Weapon|Weapons]) :-
+			player_point(PRow, PColumn),
+			weapon_point(Weapon, Row, Column),
+			is_coor_equal([PRow,PColumn],[Row,Column]), 
+			!.
+		is_player_on_weapon([Weapon|Weapons]) :-
+			player_point(PRow, PColumn),
+			weapon_point(Weapon, Row, Column),
+			is_player_on_weapon(Weapons).
+	/* Setter Getter List of Holes */
+		hole_list([
+			[5,4],[6,4],[9,4],[9,5],
+			[9,6],[7,6],[6,6],[5,6],
+			[4,6],[4,7],[4,8],[7,7],
+			[1,11],[1,12],[8,12],[8,13],
+			[8,14],[5,16],[4,16],[3,16],
+			[6,18],[7,18],[6,19],[5,19],
+			[4,19],[4,20]
+			]).
+		set_holes(Holes) :-
+			retract(hole_list(_)),
+			asserta(hole_list(Holes)).
+		hole_point(Hole, X, Y) :-
+			nth0(0, Hole, X),
+			nth0(1, Hole, Y).
+		is_object_on_hole([], Point) :- !, fail.
+		is_object_on_hole([Hole|Holes], Point) :-
+			hole_point(Hole, Row, Column),
+			is_coor_equal(Point,[Row,Column]), 
+			!.
+		is_object_on_hole([Hole|Holes], Point) :-
+			is_player_on_hole(Holes, Point).
+	/* Enemy Object */
+		enemy_list([]).
+		set_enemies(Enemies) :-
+			retract(enemy_list(_)),
+			asserta(enemy_list(Enemies)).
+		enemy_point(Enemy, Point) :-
+			nth0(0, Enemy, Point).
+		enemy_point(Enemy, X, Y) :-
+			enemy_point(Enemy, Point),
+			nth0(0, Point, X),
+			nth0(1, Point, Y).
+		/* Randomized Enemies Location */
+		init_enemies(EnemyNumber) :-
+			init_enemies(EnemyNumber, [], List),
+			asserta(enemyList(List)).
+		init_enemies(0, List, List) :- !.
+		init_enemies(EnemyNumber, Temp, List) :-
+			random(1, 10, Row),
+			random(1, 20, Column),
+			validate_pos([Row,Column], Temp), !,
+			init_enemies(EnemyNumber, [[Row,Column]|Temp], List).
+		init_enemies(EnemyNumber, Temp, List) :-
+			N is EnemyNumber-1,
+			random(1, 10, Row),
+			random(1, 20, Column),
+			init_enemies(N, [[Row,Column]|Temp], List).
+		/* Avoid same enemies location when initialization */ 
+		validate_pos(Point, [Enemy|EnemyList]) :-
+			enemy_point(Enemy, EnemyPoint),
+			is_coor_equal(Point, EnemyPoint).
+		put_enemies([]).
+		put_enemies([E|Enemies]) :-
+			absis_enemy(E, X),
+			ordinat_enemy(E, Y),
+			set_map_el(X, Y, 'E'),
+			put_enemies(Enemies).
+	/* Player Object */
+		player_health(100).
+		player_hunger(100).
+		player_thirst(100).
+		player_point(1,1).
+		player_inventory([]).
+		player_capacity(5).
+		set_player_health(Health) :-
+			retract(player_health(_)),
+			asserta(player_health(Health)).
+		set_player_hunger(Hunger) :-
+			retract(player_hunger(_)),
+			asserta(player_hunger(Hunger)).
+		set_player_thirst(Thirst) :-
+			retract(player_thrist(_)),	
+			asserta(player_thirst(Thirst)).
+		set_player_point(X, Y) :-
+			retract(player_point(_, _)),
+			asserta(player_point(X, Y)).
+		set_player_inventory(Inventory) :-
+			retract(player_inventory(_)),
+			asserta(player_inventory(Inventory)).
+		put_player :-
+			player_point(X, Y),
+			set_map_el(X, Y, 'P').
+		take_item(Item) :-
+			player_inventory(Inventory),	
+			player_capacity(Capacity),
+			length(Inventory, Len),
+			Len < Capacity,
+			set_player_inventory([Item|Inventory]),
+			!.
+		take_item(Item) :-
+			write('Your inventory is full.\n'), 
+			!, 
+			fail.
 
-redraw_map :-
-	reset_row(1,11),
-	put_player.
-	/*
-	get_weapons(Weapons),
-	put_weapons(Weapons),
-	get_water(Water),
-	put_water(Water),
-	get_foods(Foods),
-	put_foods(Foods),
-	get_medicines(Medicines),
-	put_medicines(Medicines),
-	get_enemies(Enemies),
-	put_enemies(Enemies).
-	*/
-
-reset_row(MinNumber, MinNumber) :-
-	initPeta, !.
-reset_row(MinNumber, Indexer) :-
-	retract(baris(Indexer, _)),
-	asserta(baris(Indexer, [?,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,?])),
-	V is Indexer-1,
-	reset_row(MinNumber, V).
-
-put_player :-
-	player_absis(X),
-	player_ordinat(Y),
-	set(X, Y, 'P').
-put_weapons([]).
-put_weapons([W|Weapons]) :-
-	absis_weapon(W, X),
-	ordinat_weapon(W, Y),
-	set(X, Y, '#'),
-	put_weapons(Weapons).
-put_water([]).
-put_water([W|Water]) :-
-	absis_water(W, X),
-	ordinat_water(W, Y),
-	set(X, Y, 'W'),
-	put_water(Water).
-put_foods([]).
-put_foods([F|Foods]) :-
-	absis_food(F, X),
-	ordinat_food(F, Y),
-	set(X, Y, 'F'),
-	put_foods(Foods).
-put_medicines([]).
-put_medicines([M|Medicines]) :-
-	absis_medicine(M, X),
-	ordinat_medicine(M, Y),
-	set(X, Y, 'M'),
-	put_medicines(Medicines).
-put_enemies([]).
-put_enemies([E|Enemies]) :-
-	absis_enemy(E, X),
-	ordinat_enemy(E, Y),
-	set(X, Y, 'E'),
-	put_enemies(Enemies).
-
-is_coor_equal([],[]).
-is_coor_equal([X|P1], [X|P2]) :-
-	is_coor_equal(P1,P2).	
+/*Command-Command utama*/
+	start:- 
+		redraw_map,
+		set_player_point(1,1),
+		init_enemies(10).
+	help :- 
+		write('Available commands:\n'),
+		write('start. -- start the game!\n'),
+		write('help. -- show available commands\n'),
+		write('quit. -- quit the game\n'),
+		write('look. -- look around you\n'),
+		write('n. s. e. w. -- move\n'),
+		write('map. -- look at the map and detect enemies (need radar to use)\n'),
+		write('take(Object). -- pick up an object\n'),
+		write('drop(Object). -- drop an object use(Object). -- use an object\n'),
+		write('attack. -- attack enemy that crosses your path\n'),
+		write('status. -- show your status\n'),
+		write('save(Filename). -- save your game\n'),
+		write('load(Filename). -- load previously saved game\n').
+	quit :-
+		set_state(0),
+		write('Keluar dari permainan.\n').
+	look :- 
+		redraw_map,
+		player_point(Row,Column),
+		MinBrs is Row-1 ,
+		MaxBrs is Row+1 , 
+		MinKol is Column-1 ,
+		MaxKol is Column+1 , 
+		print_batas_mapk(MinBrs,MaxBrs,MinKol,MaxKol).
+	s :- 
+		player_point(Row,Column),
+		Row < 10,
+		Brs is Row+1,
+		set_player_point(Brs, Column).
+	n :- 
+		player_point(Row,Column),
+		Row > 1,
+		Brs is Row-1,
+		set_player_point(Brs, Column).
+	e :- 
+		player_point(Row,Column),
+		Column < 10,
+		Kol is Column+1,
+		set_player_point(Row, Kol).
+	w :- 
+		player_point(Row,Column),
+		Column > 1,
+		Kol is Column-1,
+		set_player_point(Row, Kol).
+	map :- 
+		redraw_map,
+		peta(M), 
+		print_matriks(M), !.
+	take(Object) :-
+		Object == 'M',
+		medicine_list(Medicines),
+		is_player_on_medicine(Medicines),
+		take_item('M'),
+		write('Medicine has been taken.\n'),
+		!.
+	take(Object) :-
+		Object == 'F',
+		food_list(Foods),
+		is_player_on_food(Foods),
+		take_item('F'), 
+		write('Food has been taken.\n'),
+		!.
+	take(Object) :-
+		Object == 'W',
+		water_list(Water),
+		is_player_on_water(Water),
+		take_item('W'), 
+		write('Water has been taken.\n'),
+		!.
+	take(Object) :-
+		Object == '#',
+		weapon_list(Weapons),
+		is_player_on_weapon(Weapons),
+		take_item('#'),
+		write('Weapon has been taken.\n'),
+		!.
+	take(Object) :-
+		write('No object taken.\n'),
+		!,
+		fail.
