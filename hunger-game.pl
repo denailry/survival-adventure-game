@@ -8,12 +8,17 @@
 :- dynamic(peta/1).
 :- dynamic(baris/2).
 :- dynamic(player_health/1).
+:- dynamic(player_hunger/1).
 :- dynamic(player_point/2).
 :- dynamic(player_inventory/1).
 :- dynamic(player_weapon/1).
 :- dynamic(enemy_list/1).
 :- dynamic(enemy_point/2).
-
+:- dynamic(weapon_list/1).
+:- dynamic(water_list/1).
+:- dynamic(food_list/1).
+:- dynamic(medicine_list/1).
+:- dynamic(game_state/1).
 /* Primitif Global */
 	/* Primitif List */
 		/*Ubah Isi List*/
@@ -34,16 +39,58 @@
 			append(X,[Value],Z) , 
 			append(Z,N,L2).
 	/* Setter Getter Game State */
-		is_running(0).
+		game_state(0).
 		set_state(S) :-
-			retract(is_running(_)),
-			asserta(is_running(S)).
+			retract(game_state(_)),
+			asserta(game_state(S)).
 	/* Others */
 		/* True when two points is same */
 		is_coor_equal([],[]).
 		is_coor_equal([X|P1], [X|P2]) :-
 			is_coor_equal(P1,P2).	
-
+		/* State Validation */
+		validate_running :-
+			game_state(State),
+			State == 0,
+			write('Game is not started yet.\n'),
+			!,
+			fail.
+		validate_running :-
+			game_state(State),
+			State == 1,
+			!.
+		validate_running :-
+			game_state(State),
+			State == 2,
+			write('Game is Over. You died.\n'),
+			!,
+			fail.
+		validate_stop :-
+			game_state(State),
+			State == 0, 
+			!.
+		validate_stop :-
+			game_state(State),
+			State == 1,
+			write('Game has been started.\n'),
+			!,
+			fail.
+		validate_stop :-
+			game_state(State),
+			State == 2.
+		validate_quit :-
+			game_state(State),
+			State == 0,
+			write('Game is not started yet.\n'),
+			!,
+			fail.
+		validation_quit :-
+			game_state(State),
+			State == 1, 
+			!.
+		validate_quit :-
+			game_state(State),
+			State == 2.
 
 /* Primitif Map Game*/
 	/*Inisialisasi Baris (Fakta Baris)*/
@@ -241,6 +288,8 @@
 			weapon_point(Weapon, Point),
 			nth0(0, Point, X),
 			nth0(1, Point, Y).
+		weapon_damage(Weapon, Damage) :-
+			nth0(1, Weapon, Damage).
 		put_weapons([]) :- !.
 		put_weapons([W|Weapons]) :-
 			weapon_point(W, X, Y),
@@ -256,6 +305,12 @@
 			player_point(PRow, PColumn),
 			weapon_point(Weapon, Row, Column),
 			is_player_on_weapon(Weapons).
+		status_weapon(Weapon) :-
+			nl,
+			weapon_damage(Weapon, Damage),
+			write(Damage),
+			write(' Damage\n').
+
 	/* Setter Getter List of Holes */
 		hole_list([
 			[5,4],[6,4],[9,4],[9,5],
@@ -283,28 +338,52 @@
 			is_coor_equal(Point,[Row,Column]), 
 			!.
 		is_object_on_hole([Hole|Holes], Point) :-
-			is_player_on_hole(Holes, Point).
+			is_object_on_hole(Holes, Point).
 	/* Enemy Object */
-		enemy1(1, 100, 10, [0,0]).
-		enemy2(1, 100, 10, [0,0]).
-		enemy3(1, 100, 10, [0,0]).
-		enemy4(1, 100, 10, [0,0]).
-		enemy4(2, 120, 20, [0,0]).
-		enemy5(2, 120, 20, [0,0]).
-		enemy6(2, 120, 20, [0,0]).
-		enemy7(3, 150, 30, [0,0]).
-		enemy8(3, 150, 30, [0,0]).
-		enemy9(3, 150, 30, [0,0]).
-		enemy10(4, 200, 50, [0,0]).
+		enemy(1, ['Goblin Kurus', 100, 10, [0,0], 1]).
+		enemy(2, ['Goblin Botak', 100, 10, [0,0], 2]).
+		enemy(3, ['Serigala Ganteng', 100, 10, [0,0], 3]).
+		enemy(4, ['Harimau Tampan', 100, 10, [0,0], 4]).
+		enemy(5, ['Ogre Bumbum', 120, 20, [0,0], 5]).
+		enemy(6, ['Serigala Bumbum', 120, 20, [0,0], 6]).
+		enemy(7, ['Goblin Bumbum', 120, 20, [0,0], 7]).
+		enemy(8, ['Tikus Cantik', 150, 30, [0,0], 8]).
+		enemy(9, ['Tikus Gila', 150, 30, [0,0], 9]).
+		enemy(10, ['Raja Semut', 200, 50, [0,0], 10]).
 		set_enemies(Enemies) :-
 			retract(enemy_list(_)),
 			asserta(enemy_list(Enemies)).
+		set_enemy(Enemy) :-
+			enemy_list([E|Enemies]),
+			set_enemy(Enemy,[E|Enemies],Res),
+			set_enemies(Res).
+		set_enemy(Enemy,[E|Enemies],Res) :-
+			enemy_id(Enemy, Id),
+			enemy_id(E, EId), 
+			Id == EId,
+			append([Enemy],Enemies,Res),
+			enemy_name(Enemy, Name),
+			!.
+		set_enemy(Enemy, [E|Enemies],Res) :-
+			enemy_id(Enemy, Id),
+			enemy_id(E, EId),
+			Id \== EId,
+			set_enemy(Enemy,Enemies,DRes),
+			append([E],DRes,Res).
+		set_point(Enemy, Point, DEnemy) :-
+			change(Enemy, 4, Point, DEnemy).
 		enemy_point(Enemy, Point) :-
 			nth0(3, Enemy, Point).
 		enemy_point(Enemy, X, Y) :-
 			enemy_point(Enemy, Point),
 			nth0(0, Point, X),
 			nth0(1, Point, Y).
+		enemy_damage(Enemy, Damage) :-
+			nth0(2, Enemy, Damage).
+		enemy_name(Enemy, Name) :-
+			nth0(0, Enemy, Name).
+		enemy_id(Enemy, Id) :-
+			nth0(4, Enemy, Id).
 		/* Randomized Enemies Location */
 		init_enemies(EnemyNumber) :-
 			init_enemies(EnemyNumber, [], List),
@@ -312,27 +391,47 @@
 			!.
 		init_enemies(0, List, List) :- !.
 		init_enemies(EnemyNumber, Temp, List) :-
-			random(1, 10, Row),
-			random(1, 20, Column),
-			validate_pos([Row,Column], Temp), !,
-			init_enemies(EnemyNumber, [[Row,Column]|Temp], List).
-		init_enemies(EnemyNumber, Temp, List) :-
 			N is EnemyNumber-1,
 			random(1, 10, Row),
 			random(1, 20, Column),
-			init_enemies(N, [[Row,Column]|Temp], List).
+			init_enemy(EnemyNumber, Row, Column, Enemy, Temp),
+			init_enemies(N, [Enemy|Temp], List).
+		init_enemy(N, Row, Column, Enemy, Enemies) :-
+			invalidate_init_pos([Row, Column], Enemies),
+			random(1, 10, DRow),
+			random(1, 20, DColumn),
+			init_enemy(N, DRow, DColumn, Enemy, Enemies),
+			!.
+		init_enemy(N, Row, Column, Enemy, Enemies) :-
+			enemy(N, DEnemy),
+			change(DEnemy, 4, [Row,Column], Enemy).
+
 		/* Avoid same enemies location when initialization */ 
-		validate_pos(Point, [Enemy|EnemyList]) :-
+		invalidate_init_pos(Point, [Enemy|EnemyList]) :-
 			enemy_point(Enemy, EnemyPoint),
 			is_coor_equal(Point, EnemyPoint),
+			!.
+		invalidate_init_pos(Point, [Enemy|EnemyList]) :-
+			invalidate_init_pos(Point, EnemyList).
+		invalidate_init_pos(Point,[]) :- 
 			hole_list(Holes),
-			\is_object_on_hole(Holes, Point).
+			is_object_on_hole(Holes, Point).
+		/* Avoid enemy move to hole or boundaries */
+		validate_pos(X, Y) :-
+			X >= 1, X =< 10,
+			Y >= 1, Y =< 20,
+			hole_list(Holes),
+			\+is_object_on_hole(Holes,[X,Y]).
 		put_enemies([]) :- !.
 		put_enemies([E|Enemies]) :-
 			length(Enemies, Len),
 			enemy_point(E, X, Y),
 			set_map_el(X, Y, 'E'),
 			put_enemies(Enemies).
+		trigger_enemy :-
+			enemy_list(Enemies),
+			trigger_enemy(Enemies).
+		trigger_enemy([]) :- !.
 		trigger_enemy([E|Enemies]) :-
 			player_point(Row, Column),
 			enemy_point(E, Point),
@@ -343,10 +442,64 @@
 		trigger_enemy([E|Enemies]) :-
 			random(1,4,Direction),
 			move_enemy(E, Direction),
+			trigger_enemy(Enemies),
 			!.
 		trigger_enemy([E|Enemies]) :-
 			trigger_enemy([E|Enemies]).
-
+		attack_player(Enemy) :-
+			player_health(CurrentHealth),
+			enemy_damage(Enemy, Damage),
+			enemy_name(Enemy, Name),
+			Health is CurrentHealth-Damage,
+			set_player_health(Health),
+			write('You are attacked by '),
+			write(Name),
+			nl,
+			validate_player.
+		move_enemy(Enemy, Direction) :-
+			Direction == 0,
+			enemy_point(Enemy, Row, Column),
+			DRow is Row-1,
+			validate_pos(DRow, Column),
+			set_point(Enemy, [DRow,Column], DEnemy),
+			set_enemy(DEnemy),
+			write(Row), write(' '), write(Column), write(' '),
+			write(DRow), write(' '), write(Column),
+			nl,
+			!.
+		move_enemy(Enemy, Direction) :-
+			Direction == 1,
+			enemy_point(Enemy, Row, Column),
+			DColumn is Column+1,
+			validate_pos(Row, DColumn),
+			set_point(Enemy, [Row,DColumn], DEnemy),
+			set_enemy(DEnemy),
+			write(Row), write(' '), write(Column), write(' '),
+			write(Row), write(' '), write(DColumn),
+			nl,
+			!.
+		move_enemy(Enemy, Direction) :-
+			Direction == 2,
+			enemy_point(Enemy, Row, Column),
+			DRow is Row+1,
+			validate_pos(DRow, Column),
+			set_point(Enemy, [DRow,Column], DEnemy),
+			set_enemy(DEnemy),
+			write(Row), write(' '), write(Column), write(' '),
+			write(DRow), write(' '), write(Column),
+			nl,
+			!.
+		move_enemy(Enemy, Direction) :-
+			Direction == 3,
+			enemy_point(Enemy, Row, Column),
+			DColumn is Column-1,
+			validate_pos(Row, DColumn),
+			set_point(Enemy, [Row,DColumn], DEnemy),
+			set_enemy(DEnemy),
+			write(Row), write(' '), write(Column), write(' '),
+			write(Row), write(' '), write(DColumn),
+			nl,
+			!.
 
 	/* Player Object */
 		player_health(100).
@@ -388,9 +541,19 @@
 			write('Your inventory is full.\n'), 
 			!, 
 			fail.
+		validate_player :-
+			player_health(Health),
+			Health =< 0,
+			set_state(2).
+		status_inventory([]) :- !.
+		status_inventory([Item|Inventory]) :-
+			write(Item), write(' '),
+			status_inventory(Inventory).
 
 /*Command-Command utama*/
 	start:- 
+		validate_stop,
+		set_state(1),
 		set_player_point(1,1),
 		init_enemies(10),
 		redraw_map.
@@ -409,9 +572,11 @@
 		write('save(Filename). -- save your game\n'),
 		write('load(Filename). -- load previously saved game\n').
 	quit :-
+		validate_quit,
 		set_state(0),
 		write('Keluar dari permainan.\n').
 	look :- 
+		validate_running,
 		redraw_map,
 		player_point(Row,Column),
 		MinBrs is Row-1 ,
@@ -420,62 +585,95 @@
 		MaxKol is Column+1 , 
 		print_batas_mapk(MinBrs,MaxBrs,MinKol,MaxKol).
 	s :- 
+		validate_running,
 		player_point(Row,Column),
 		Row < 10,
 		Brs is Row+1,
-		set_player_point(Brs, Column).
+		set_player_point(Brs, Column),
+		trigger_enemy.
 	n :- 
+		validate_running,
 		player_point(Row,Column),
 		Row > 1,
 		Brs is Row-1,
-		set_player_point(Brs, Column).
+		set_player_point(Brs, Column),
+		trigger_enemy.
 	e :- 
+		validate_running,
 		player_point(Row,Column),
-		Column < 10,
+		Column < 20,
 		Kol is Column+1,
-		set_player_point(Row, Kol).
+		set_player_point(Row, Kol),
+		trigger_enemy.
 	w :- 
+		validate_running,
 		player_point(Row,Column),
 		Column > 1,
 		Kol is Column-1,
-		set_player_point(Row, Kol).
+		set_player_point(Row, Kol),
+		trigger_enemy.
 	map :- 
+		validate_running,
 		redraw_map,
 		peta(M), 
 		print_matriks(M), !.
 	take(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == 'M',
 		medicine_list(Medicines),
 		is_player_on_medicine(Medicines),
 		take_item('M'),
+		player_point(X,Y),
+		select([X,Y],Medicines,LAfter),
+		set_medicines(LAfter),
 		write('Medicine has been taken.\n'),
 		!.
 	take(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == 'F',
 		food_list(Foods),
 		is_player_on_food(Foods),
 		take_item('F'), 
+		player_point(X,Y),
+		select([X,Y],Foods,LAfter),
+		set_foods(LAfter),
 		write('Food has been taken.\n'),
 		!.
 	take(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == 'W',
 		water_list(Water),
 		is_player_on_water(Water),
-		take_item('W'), 
+		take_item('W'),
+		player_point(X,Y),
+		select([X,Y],Water,LAfter),
+		set_water(LAfter), 
 		write('Water has been taken.\n'),
 		!.
 	take(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == '#',
 		weapon_list(Weapons),
 		is_player_on_weapon(Weapons),
 		take_item('#'),
+		player_point(X,Y),
+		select([X,Y],Weapons,LAfter),
+		set_weapons(LAfter),
 		write('Weapon has been taken.\n'),
 		!.
 	take(Object) :-
+		validate_running,
+		trigger_enemy,
 		write('No object taken.\n'),
 		!,
 		fail.
 	use(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == 'M',
 		medicine_power(Power),
 		player_health(CurrentHealth),
@@ -486,6 +684,8 @@
 		nl,
 		!.
 	use(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == 'F',
 		food_power(Power),
 		player_hunger(CurrentHunger),
@@ -496,6 +696,8 @@
 		nl,
 		!.
 	use(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == 'W',
 		water_power(Power),
 		player_thirst(CurrentThirst),
@@ -506,14 +708,19 @@
 		nl,
 		!.
 	use(Object) :-
+		validate_running,
+		trigger_enemy,
 		Object == '#',
 		change_weapon,
 		!.
 	use(Object) :-
+		validate_running,
+		trigger_enemy,
 		write('No action.\n'),
 		!,
 		fail.
 	status :-
+		validate_running,
 		player_health(Health),
 		player_hunger(Hunger),
 		player_thirst(Thirst),
