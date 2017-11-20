@@ -9,7 +9,10 @@
 :- dynamic(baris/2).
 :- dynamic(player_point/2).
 :- dynamic(player_inventory/1).
-
+:- dynamic(weapon_list/1).
+:- dynamic(water_list/1).
+:- dynamic(food_list/1).
+:- dynamic(medicine_list/1).
 /* Primitif Global */
 	/* Primitif List */
 		/*Ubah Isi List*/
@@ -392,6 +395,9 @@
 		medicine_list(Medicines),
 		is_player_on_medicine(Medicines),
 		take_item('M'),
+		player_point(X,Y),
+		select([X,Y],Medicines,LAfter),
+		set_medicines(LAfter),
 		write('Medicine has been taken.\n'),
 		!.
 	take(Object) :-
@@ -399,13 +405,19 @@
 		food_list(Foods),
 		is_player_on_food(Foods),
 		take_item('F'), 
+		player_point(X,Y),
+		select([X,Y],Foods,LAfter),
+		set_foods(LAfter),
 		write('Food has been taken.\n'),
 		!.
 	take(Object) :-
 		Object == 'W',
 		water_list(Water),
 		is_player_on_water(Water),
-		take_item('W'), 
+		take_item('W'),
+		player_point(X,Y),
+		select([X,Y],Water,LAfter),
+		set_water(LAfter), 
 		write('Water has been taken.\n'),
 		!.
 	take(Object) :-
@@ -413,6 +425,9 @@
 		weapon_list(Weapons),
 		is_player_on_weapon(Weapons),
 		take_item('#'),
+		player_point(X,Y),
+		select([X,Y],Weapons,LAfter),
+		set_weapons(LAfter),
 		write('Weapon has been taken.\n'),
 		!.
 	take(Object) :-
