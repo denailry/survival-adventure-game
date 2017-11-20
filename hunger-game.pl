@@ -7,110 +7,132 @@
 */
 
 /* Setter Getter Map */
-setMap(_) :-
+set_map(_) :-
     retract(gameMap(_)),
     fail.
-setMap(M) :-
+set_map(M) :-
     asserta(gameMap(M)).
-getMap(M) :-
+get_map(M) :-
     gameMap(M).
 
 /* Setter Getter List Food pada Game */
-setFoodList(_) :-
+set_foods(_) :-
 	retract(foodList(_)),
 	fail.
-setFoodList(L) :-
+set_foods(L) :-
 	asserta(foodList(M)).
-getFoodList(L) :-
+get_foods(L) :-
 	foodList(L).
 
 /* Setter Getter List Water pada Game  */
-setWaterList(_) :-
+set_water(_) :-
 	retract(waterList(_)),
 	fail.
-setWaterList(L) :-
+set_water(L) :-
 	asserta(waterList(M)).
-getWaterList(L) :-
+get_water(L) :-
 	waterList(L).
 
 /* Setter Getter List Medicine pada Game */
-setMedicineList(_) :-
+set_medicines(_) :-
 	retract(medicineList(_)),
 	fail.
-setMedicineList(L) :-
+set_medicines(L) :-
 	asserta(medicineList(M)).
-getMedicineList(L) :-
+get_medicines(L) :-
 	medicineList(L).
 
 /* Setter Getter List Weapon pada Game */
-setWeaponList(_) :-
+set_weapons(_) :-
 	retract(weaponList(_)),
 	fail.
-setWeaponList(L) :-
+set_weapons(L) :-
 	asserta(weaponList(M)).
-getWeaponList(L) :-
+get_weapons(L) :-
 	weaponList(L).
 
 /* Setter Getter List Enemy pada Game */
-setEnemyList(_) :-
-	retract(enemyList(_)).
-setEnemyList(E) :-
+set_enemies(_) :-
+	retract(enemyList(_)),
+	fail.
+set_enemies(E) :-
 	asserta(enemyList(E)).
-getEnemyList(E) :-
+get_enemies(E) :-
 	enemyList(E).
 
-/* Setter Getter Inventory Player */
-setInventory(I) :-
-	retract(inventory(_)).
-setInventory(I) :-
-	asserta(inventory(I)).
-getInventory() :-
-	inventory(I).
+/* Setter Getter Player */
+set_player(_) :-
+	retract(player(_)),
+	fail.
+set_player(Health, Hunger, Thirst, Weapon, Inventory) :-
+	asserta(player(Health, Hunger, Thirst, Weapon, Inventory)).
+get_player(Health, Hunger, Thirst, Weapon, Inventory) :-
+	player(Health, Hunger, Thirst, Weapon, Inventory).
 
-/* Menampilkan peta */
-PrintMap([]).
-PrintMap([H|T]) :-
-	PrintBaris(H),
+/* Menampilkan pesan awal permainan */
+start_message.
+/* Menampilkan daftar perintah yang dapat dieksekusi */
+help.
+
+/* Memulai permainan */
+start :-
+	start_message,
+	set_player(100, 100, 100, 0, []),
+	set_map([
+		['-', '-','-','-','-'], 
+		['-', '-','-','-','-']
+	]),
+	set_foods([[0,0],[3,1],[4,4]]),
+	help.
+
+/** 
+ * Menampilkan peta dengan cara mengambil
+ * dengan cara mengambil tiap baris dengan get_map
+ * dan memanggil print_baris untuk menampilkan
+ * setiap titik pada peta
+ */
+print_map :-
+	get_map(Map),
+	print_map(Map).
+print_map([]).
+print_map([Row|Remain]) :-
+	print_baris(Row),
 	nl,
-	PrintMap(T).
-/* Menginisiasi map kosong */
-InitMap.
-/* Menginisiasi kolom kosong pada map */
-InitKol.
-/* Menginisiasi baris kosong pada map */
-InitBar.
-/* Mengisi petak pada map dengan Food */
-PutFood(Food).
-/* Mengisi petak pada map dengan Water */
-PutWater(Water).
-/* Mengisi petak pada map dengan Medicine */
-PutMedicine(Medicine).
-/* Mengisi petak pada map dengan Weapon */
-PutWeapon(Weapon).
-/* Mengisi petak pada map dengan Enemy */
-InitEnemy(Enemy).
-/* Menghapus object dari permainan */
-DeleteObject(Type, Object).
-/* Menambahkan object dari permainan */
-AddObject(Type, Object).
-/* Menghapus object dari inventory player */
-DeleteItem(Object).
-/* Menambahkan object ke inventory player */
-AddItem(Object).
-/* Memanfaatkan item yang ada di inventory */
-UseItem(Object).
-/* Memindahkan player ke koordinat (x, y) */
-MovePlayer(X, Y).
-/* Enemy menyerang player */
-AttackPlayer.
-/* Player menyerang enemy */
-AttackEnemy.
-/* Menginsiasi enemy untuk melakukan attack atau 
-	move sesuai kondisi */
-TriggerEnemy.
-/* Menyimpan segala informasi game yang sedang
-	berlangsung pada file eksternal */
-SaveGame.
-/* Mengakses segala informasi game yang telah
-	disimpan pada file eksternal */
-LoadGame.
+	print_map(Remain).
+print_baris([]).
+print_baris([Column|Remain]) :-
+	write(Column),
+	print_baris(Remain).
+change_point(X, Y, Char) :-
+	write('DEBUG '),
+	get_map(Map),
+	write('DEBUG '),
+	V is X-1,
+	write('DEBUG '),
+	pop_row(Map, V, Y, Char),
+	set_map(Map).
+pop_row([Row|Remain], X, Y, Char) :-
+	write('DEBUG1 '),
+	X == 0,
+	V is Y-1,
+	write('DEBUG1 '),
+	DRow is ['-', '-','-','-','-'],
+	write('DEBUG1 '),
+	pop_col(DRow, V, Char),
+	write('DEBUG1 '),
+	Row is DRow.
+pop_row([Row|Remain], X, Y, Char) :-
+	write('DEBUG2 '),
+	X > 0,
+	V is Y-1,
+	write('DEBUG2'),
+	pop_row(Remain, V, Y, Char).
+pop_col([Dot|Remain], Y, Char) :-
+	Y == 0,
+	Dot is Char.
+pop_col([Dot|Remain], Y, Char) :-
+	Y > 0,
+	V is Y-1,
+	DDot is Dot,
+	pop_col(DDot, V, Char),
+	Dot is DDot.
