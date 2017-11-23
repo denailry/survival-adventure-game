@@ -50,21 +50,24 @@
 			is_coor_equal(P1,P2).	
 		/* State Validation */
 		validate_running :-
+			write('A\n'),
 			game_state(State),
 			State == 0,
+			write(State),
+			nl,
 			write('Game is not started yet.\n'),
-			!,
-			fail.
+			!.
 		validate_running :-
+			write('B\n'),
 			game_state(State),
 			State == 1,
 			!.
 		validate_running :-
+			write('C\n'),
 			game_state(State),
 			State == 2,
 			write('Game is Over. You died.\n'),
-			!,
-			fail.
+			!.
 		validate_stop :-
 			game_state(State),
 			State == 0, 
@@ -91,6 +94,35 @@
 		validate_quit :-
 			game_state(State),
 			State == 2.
+	/* Saving and Loading */
+		save(F) :-
+			telling(V), tell(F),
+			listing(peta/1),
+			listing(baris/2),
+			listing(player_health/1),
+			listing(player_hunger/1),
+			listing(player_point/2),
+			listing(player_inventory/1),
+			listing(player_weapon/1),
+			listing(enemy_list/1),
+			listing(enemy_point/2),
+			listing(weapon_list/1),
+			listing(water_list/1),
+			listing(food_list/1),
+			listing(medicine_list/1),
+			listing(game_state/1),
+			told, tell(V),
+			retract(game_state/1).
+		aload(F) :-
+			seeing(V), see(F),
+			repeat,
+			read(Data),
+			process(Data),
+			seen,
+			see(V),
+			!.
+		process(end_of_file) :- !.
+		process(Data) :- asserta(Data),  fail.
 
 /* Primitif Map Game*/
 	/*Inisialisasi Baris (Fakta Baris)*/
@@ -150,14 +182,6 @@
 		put_player,
 		hole_list(Holes),
 		put_holes(Holes),
-		weapon_list(Weapons),
-		put_weapons(Weapons),
-		water_list(Water),
-		put_water(Water),
-		food_list(Foods),
-		put_foods(Foods),
-		medicine_list(Medicines),
-		put_medicines(Medicines),
 		enemy_list(Enemies),
 		put_enemies(Enemies).
 	reset_row(MinNumber, MinNumber) :-
@@ -436,14 +460,14 @@
 			player_point(Row, Column),
 			enemy_point(E, Point),
 			is_coor_equal(Point, [Row, Column]),
+			!,
 			attack_player(E),
-			trigger_enemy(Enemies),
-			!.
+			trigger_enemy(Enemies).
 		trigger_enemy([E|Enemies]) :-
 			random(1,4,Direction),
 			move_enemy(E, Direction),
-			trigger_enemy(Enemies),
-			!.
+			!,
+			trigger_enemy(Enemies).
 		trigger_enemy([E|Enemies]) :-
 			trigger_enemy([E|Enemies]).
 		attack_player(Enemy) :-
@@ -455,7 +479,8 @@
 			write('You are attacked by '),
 			write(Name),
 			nl,
-			validate_player.
+			validate_player,
+			!.
 		move_enemy(Enemy, Direction) :-
 			Direction == 0,
 			enemy_point(Enemy, Row, Column),
@@ -463,9 +488,6 @@
 			validate_pos(DRow, Column),
 			set_point(Enemy, [DRow,Column], DEnemy),
 			set_enemy(DEnemy),
-			write(Row), write(' '), write(Column), write(' '),
-			write(DRow), write(' '), write(Column),
-			nl,
 			!.
 		move_enemy(Enemy, Direction) :-
 			Direction == 1,
@@ -474,9 +496,6 @@
 			validate_pos(Row, DColumn),
 			set_point(Enemy, [Row,DColumn], DEnemy),
 			set_enemy(DEnemy),
-			write(Row), write(' '), write(Column), write(' '),
-			write(Row), write(' '), write(DColumn),
-			nl,
 			!.
 		move_enemy(Enemy, Direction) :-
 			Direction == 2,
@@ -485,9 +504,6 @@
 			validate_pos(DRow, Column),
 			set_point(Enemy, [DRow,Column], DEnemy),
 			set_enemy(DEnemy),
-			write(Row), write(' '), write(Column), write(' '),
-			write(DRow), write(' '), write(Column),
-			nl,
 			!.
 		move_enemy(Enemy, Direction) :-
 			Direction == 3,
@@ -496,9 +512,6 @@
 			validate_pos(Row, DColumn),
 			set_point(Enemy, [Row,DColumn], DEnemy),
 			set_enemy(DEnemy),
-			write(Row), write(' '), write(Column), write(' '),
-			write(Row), write(' '), write(DColumn),
-			nl,
 			!.
 
 	/* Player Object */
@@ -520,7 +533,8 @@
 			asserta(player_thirst(Thirst)).
 		set_player_point(X, Y) :-
 			retract(player_point(_, _)),
-			asserta(player_point(X, Y)).
+			asserta(player_point(X, Y)),
+			!.
 		set_player_inventory(Inventory) :-
 			retract(player_inventory(_)),
 			asserta(player_inventory(Inventory)).
@@ -587,6 +601,7 @@
 		write('Keluar dari permainan.\n').
 	look :- 
 		validate_running,
+		trigger_enemy,
 		redraw_map,
 		player_point(Row,Column),
 		MinBrs is Row-1 ,
@@ -596,32 +611,29 @@
 		print_batas_mapk(MinBrs,MaxBrs,MinKol,MaxKol).
 	s :- 
 		validate_running,
+		trigger_enemy,
 		player_point(Row,Column),
 		Row < 10,
 		Brs is Row+1,
-		set_player_point(Brs, Column),
-		trigger_enemy.
+		set_player_point(Brs, Column).
 	n :- 
 		validate_running,
+		trigger_enemy,
 		player_point(Row,Column),
 		Row > 1,
 		Brs is Row-1,
-		set_player_point(Brs, Column),
-		trigger_enemy.
+		set_player_point(Brs, Column).
 	e :- 
-		validate_running,
-		player_point(Row,Column),
-		Column < 20,
-		Kol is Column+1,
-		set_player_point(Row, Kol),
-		trigger_enemy.
+		validate_running, 
+		trigger_enemy,
+		player_point(Row,Column).
 	w :- 
 		validate_running,
+		trigger_enemy,
 		player_point(Row,Column),
 		Column > 1,
 		Kol is Column-1,
-		set_player_point(Row, Kol),
-		trigger_enemy.
+		set_player_point(Row, Kol).
 	map :- 
 		validate_running,
 		redraw_map,
