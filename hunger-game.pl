@@ -224,12 +224,12 @@
 			set_map_el(X, Y, 'W'),
 			put_water(Water).
 		is_player_on_water([]) :- !, fail.
-		is_player_on_water([W|Water]) :-
+		is_player_on_water([W|_]) :-
 			player_point(PRow, PColumn),
 			water_point(W, Row, Column),
 			is_coor_equal([PRow,PColumn],[Row,Column]), 
 			!.
-		is_player_on_water([W|Waters]) :-
+		is_player_on_water([_|Waters]) :-
 			is_player_on_water(Waters).
 
 	/* Medicine Object */
@@ -251,12 +251,12 @@
 			set_map_el(X, Y, 'M'),
 			put_medicines(Medicines).
 		is_player_on_medicine([]) :- !, fail.
-		is_player_on_medicine([Medicine|Medicines]) :-
+		is_player_on_medicine([Medicine|_]) :-
 			player_point(PRow, PColumn),
 			medicine_point(Medicine, Row, Column),
 			is_coor_equal([PRow,PColumn],[Row,Column]), 
 			!.
-		is_player_on_medicine([Medicine|Medicines]) :-
+		is_player_on_medicine([_|Medicines]) :-
 			is_player_on_medicine(Medicines).
 
 	/* Weapon Object */
@@ -276,26 +276,22 @@
 			asserta(weapon_list(Weapons)).
 		weapon_point(Weapon, Point) :-
 			nth0(2, Weapon, Point).
-		weapon_point(Weapon, X, Y) :-
-			weapon_point(Weapon, Point),
-			nth0(0, Point, X),
-			nth0(1, Point, Y).
 		weapon_damage(Weapon, Damage) :-
 			nth0(1, Weapon, Damage).
 		put_weapons([]) :- !.
 		put_weapons([W|Weapons]) :-
-			weapon_point(W, X, Y),
+			weapon_point(W,Point),
+			Point = [X,Y],
 			set_map_el(X, Y, '#'),
 			put_weapons(Weapons).
 		is_player_on_weapon([]) :- !, fail.
-		is_player_on_weapon([Weapon|Weapons]) :-
+		is_player_on_weapon([Weapon|_]) :-
 			player_point(PRow, PColumn),
-			weapon_point(Weapon, Row, Column),
+			weapon_point(Weapon, Point),
+			Point = [Row,Column],
 			is_coor_equal([PRow,PColumn],[Row,Column]), 
 			!.
-		is_player_on_weapon([Weapon|Weapons]) :-
-			player_point(PRow, PColumn),
-			weapon_point(Weapon, Row, Column),
+		is_player_on_weapon([_|Weapons]) :-
 			is_player_on_weapon(Weapons).
 		status_weapon(Weapon) :-
 			nl,
@@ -376,6 +372,19 @@
 			nth0(0, Enemy, Name).
 		enemy_id(Enemy, Id) :-
 			nth0(4, Enemy, Id).
+		enemy_atacked([Enemy|Rest]):- 
+			player_point(X,Y),
+			Enemy = (It,[Name,Health,Damage,[X,Y],Id]),
+			player_weapon(X),
+			X = [_,WDamage],
+			Health_Att = Health - WDamage,
+			C_Enemy = (It,[Name,Health_Att,Damage,[X,Y],Id]),
+			set_enemy(C_Enemy),
+			enemy_atacked(Rest).
+		enemy_atacked([Enemy|Rest]):-
+			enemy_atacked(Rest).
+		enemy_atacked([]):- !.
+		
 		/* Randomized Enemies Location */
 		init_enemies(EnemyNumber) :-
 			init_enemies(EnemyNumber, [], List),
@@ -454,7 +463,10 @@
 			DRow is Row-1,
 			validate_pos(DRow, Column),
 			set_point(Enemy, [DRow,Column], DEnemy),
-			set_enemy(DEnemy),
+			set_enemy(DEnemy), 
+			write(Row), write(' '), write(Column), write(' '),
+			write(DRow), write(' '), write(Column),
+			nl,
 			!.
 		move_enemy(Enemy, Direction) :-
 			Direction == 1,
@@ -488,7 +500,7 @@
 		player_point(1,1).
 		player_inventory([]).
 		player_capacity(5).
-		player_weapon([0, 0, [0,0]]).
+		player_weapon([a,10]).
 		set_player_health(Health) :-
 			retract(player_health(_)),
 			asserta(player_health(Health)).
@@ -652,7 +664,7 @@
 		is_player_on_weapon(Weapons),
 		take_item('#'),
 		player_point(X,Y),
-		select([X,Y],Weapons,LAfter),
+		select([_,_,[X,Y]],Weapons,LAfter),
 		set_weapons(LAfter),
 		write('Weapon has been taken.\n'),
 		!.
@@ -726,7 +738,7 @@
 		Object == 'M',
 		medicine_list(Medicines),
 		is_player_on_medicine(Medicines),
-		take_item('M'),
+		drop_item('M'),
 		player_point(X,Y),
 		select([X,Y],Medicines,LAfter),
 		set_medicines(LAfter),
@@ -759,7 +771,7 @@
 		member(Object,Inventory),
 		drop_item('#'), 
 		player_point(X,Y),
-		set_weapons([[X,Y]|Weapons]),
+		set_weapons([[[X,Y]]|Weapons]),
 		write('Weapon has been dropped.\n'),
 		!.
 	drop(Object) :-
@@ -770,9 +782,18 @@
 		drop_item('M'), 
 		player_point(X,Y),
 		set_medicines([[X,Y]|Medicines]),
-		write('Weapon has been dropped.\n'),
+		write('Medicines has been dropped.\n'),
 		!.
 	drop(Object) :-
 		write('No object dropped.\n'),
+		!,
+		fail.
+	attack:- 
+		player_weapon([Name,_]),
+		Name \== "-",
+		enemy_atacked(enemy_list),
+		!.
+	attack:- 
+		write('Salah Blog\n'),
 		!,
 		fail.
