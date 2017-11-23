@@ -429,8 +429,8 @@
 			enemy_point(E, Point),
 			is_coor_equal(Point, [Row, Column]),
 			attack_player(E),
-			trigger_enemy(Enemies),
-			!.
+			!,
+			trigger_enemy(Enemies).
 		trigger_enemy([E|Enemies]) :-
 			random(1,4,Direction),
 			move_enemy(E, Direction),
