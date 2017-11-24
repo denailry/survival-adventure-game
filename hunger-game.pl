@@ -44,6 +44,50 @@
 			retract(game_state(_)),
 			asserta(game_state(S)).
 	/* Others */
+		/* Retracting all fact */
+		retract_all :-
+			retract(peta(_)),
+			fail.
+		retract_all :-
+			retract(baris(_)),
+			fail.
+		retract_all :-
+			retract(player_health(_)),
+			fail.
+		retract_all :-
+			retract(player_hunger(_)),
+			fail.
+		retract_all :-
+			retract(player_point(_)),
+			fail.
+		retract_all :-
+			retract(player_inventory(_)),
+			fail.
+		retract_all :-
+			retract(player_weapon(_)),
+			fail.
+		retract_all :-
+			retract(enemy_list(_)),
+			fail.
+		retract_all :-
+			retract(enemy_point(_)),
+			fail.
+		retract_all :-
+			retract(weapon_list(_)),
+			fail.
+		retract_all :-
+			retract(water_list(_)),
+			fail.
+		retract_all :-
+			retract(food_list(_)),
+			fail.
+		retract_all :-
+			retract(medicine_list(_)),
+			fail.
+		retract_all :-
+			retract(game_state(_)),
+			fail.
+		retract_all.
 		/* Universal object searhing */
 		search_object(Name, Item, 'F') :-
 			food_list(Foods),
@@ -97,47 +141,64 @@
 			is_coor_equal(P1,P2).	
 		/* State Validation */
 		validate_running :-
-			game_state(State),
-			State == 0,
-			write('Game is not started yet.\n'),
-			!,
-			fail.
+			game_state(0),
+			write('Game is not started yet.'), !, fail.
 		validate_running :-
-			game_state(State),
-			State == 1,
-			!.
-		validate_running :-
-			game_state(State),
-			State == 2,
-			write('Game is Over. You died.\n'),
-			!,
-			fail.
+			game_state(2),
+			write('Game is Over. You died.'), !, fail.
+		validate_running.
 		validate_stop :-
-			game_state(State),
-			State == 0, 
-			!.
-		validate_stop :-
-			game_state(State),
-			State == 1,
-			write('Game has been started.\n'),
-			!,
-			fail.
-		validate_stop :-
-			game_state(State),
-			State == 2.
+			game_state(1),
+			write('Game has been started.'), !, fail.
+		validate_stop.
 		validate_quit :-
-			game_state(State),
-			State == 0,
-			write('Game is not started yet.\n'),
-			!,
-			fail.
-		validation_quit :-
-			game_state(State),
-			State == 1, 
+			game_state(0),
+			write('Game is not started yet.'), !, fail.
+		validate_quit.
+		/* Messages */
+		start_message :- 
+			write('Welcome to the 77th Hunger Games!'), nl, nl,
+			write('You have been chosen as one of the lucky contestants.'), nl,
+			write('Be the last man standing and you will be remembered as one of the victors.'), nl, nl,
+			write('Legends:'), nl,
+			write('M = medicine F = food'), nl,
+			write('W = water'), nl,
+			write('# = weapon P = player E = enemy'), nl, 
+			write('- = accessible'), nl,
+			write('X = inaccessible'), nl, nl,
+			write('Happy Hunger Games!'), nl,
+			write('And may the odds be ever in your favor.'), nl, nl.
+		/* Save and Load Game */
+		save(F) :-
+			telling(V), tell(F),
+			listing(peta/1),
+			listing(baris/2),
+			listing(player_health/1),
+			listing(player_hunger/1),
+			listing(player_point/2),
+			listing(player_inventory/1),
+			listing(player_weapon/1),
+			listing(enemy_list/1),
+			listing(enemy_point/2),
+			listing(weapon_list/1),
+			listing(water_list/1),
+			listing(food_list/1),
+			listing(medicine_list/1),
+			listing(game_state/1),
+			told, tell(V).
+		aload(F) :-
+			retract_all,
+			seeing(V), see(F),
+			repeat,
+			read(Data),
+			process(Data),
+			seen,
+			see(V),
 			!.
-		validate_quit :-
-			game_state(State),
-			State == 2.
+		process(end_of_file) :- !.
+		process(Data) :- 
+			asserta(Data), 
+			fail.
 
 /* Primitif Map Game*/
 	/*Inisialisasi Baris (Fakta Baris)*/
@@ -162,11 +223,12 @@
 	/*Init Peta*/
 	init_map:-
 		create_map(12,M),
+		retract(peta(_)),
 		asserta(peta(M)),!.
 	/*Update Peta setelah terjadi perubahan*/
-	update_map :- 
-		retract(peta(_)) , 
+	update_map :-  
 		create_map(12,M),
+		retract(peta(_)),
 		asserta(peta(M)),!.
 	/*Selektor Element Peta*/
 	elmt_map(I, J , X) :-
@@ -732,8 +794,10 @@
 			del_inventory(Item, Inventory, [Search|NewInventory]).
 
 /*Command-Command utama*/
-	start:- 
+	start :- 
 		validate_stop,
+		start_message,
+		help,
 		set_state(1),
 		set_player_point(1,1),
 		init_enemies(10).
@@ -797,7 +861,7 @@
 		Kol is Column-1,
 		set_player_point(Row, Kol),
 		validate_player_pos([Brs, Column]).
-	map :- 
+	map :-
 		validate_running,
 		redraw_map,
 		peta(M), 
