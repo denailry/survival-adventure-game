@@ -49,7 +49,7 @@
 			retract(peta(_)),
 			fail.
 		retract_all :-
-			retract(baris(_)),
+			retract(baris(_, _)),
 			fail.
 		retract_all :-
 			retract(player_health(_)),
@@ -58,7 +58,7 @@
 			retract(player_hunger(_)),
 			fail.
 		retract_all :-
-			retract(player_point(_)),
+			retract(player_point(_, _)),
 			fail.
 		retract_all :-
 			retract(player_inventory(_)),
@@ -70,7 +70,7 @@
 			retract(enemy_list(_)),
 			fail.
 		retract_all :-
-			retract(enemy_point(_)),
+			retract(enemy_point(_, _)),
 			fail.
 		retract_all :-
 			retract(weapon_list(_)),
@@ -91,24 +91,24 @@
 		/* Universal object searhing */
 		search_object(Name, Item, 'F') :-
 			food_list(Foods),
-			search_object(Name, Foods, Item), !.
+			search_object_list(Name, Foods, Item), !.
 		search_object(Name, Item, 'W') :-
 			water_list(Water),
-			search_object(Name, Water, Item), !.
+			search_object_list(Name, Water, Item), !.
 		search_object(Name, Item, 'M') :-
 			medicine_list(Medicines),
-			search_object(Name, Medicines, Item), !.
+			search_object_list(Name, Medicines, Item), !.
 		search_object(Name, Item, '#') :-
 			weapon_list(Weapons),
-			search_object(Name, Weapons, Item), !.
-		search_object(Name, [Item|List], Item) :- !.
-		search_object(Name, [], Item) :- !, fail.
-		search_object(Name, [Search|List], Item) :-
+			search_object_list(Name, Weapons, Item), !.
+		search_object_list(0, [Item|List], Item) :- !.
+		search_object_list(Name, [], Item) :- !, fail.
+		search_object_list(Name, [Search|List], Item) :-
 			nth0(0, Search, NameItem),
 			Name == NameItem,
-			search_object(Name, [Search|List], Search), !.
-		search_object(Name, [Search|List], Item) :-
-			search_object(Name, List, Item).
+			search_object_list(0, [Search|List], Item), !.
+		search_object_list(Name, [Search|List], Item) :-
+			search_object_list(Name, List, Item).
 		/* Universal delete object from map */
 		del_object(Object, 'F') :-
 			food_list(Foods),
@@ -126,15 +126,9 @@
 			weapon_list(Weapons),
 			select(Object, Weapons, List),
 			set_weapons(List).
-		format_item(Item, 'F', ['Food', Power, 'F']) :-
-			food_power(Power).
-		format_item(Item, 'W', ['Water', Power, 'W']) :-
-			water_power(Power).
-		format_item(Item, 'M', ['Medicine', Power, 'M']) :-
-			medicine_power(Power).
-		format_item(Item, '#', [Name, Damage, '#']) :-
-			weapon_name(Item, Name),
-			weapon_damage(Item, Damage).
+		format_item(Item, Type, [Name, Power, Type]) :-
+			object_name(Item, Name),
+			object_effect(Item, Power).
 		/* True when two points is same */
 		is_coor_equal([],[]).
 		is_coor_equal([X|P1], [X|P2]) :-
@@ -168,37 +162,46 @@
 			write('X = inaccessible'), nl, nl,
 			write('Happy Hunger Games!'), nl,
 			write('And may the odds be ever in your favor.'), nl, nl.
-		/* Save and Load Game */
-		save(F) :-
-			telling(V), tell(F),
-			listing(peta/1),
-			listing(baris/2),
-			listing(player_health/1),
-			listing(player_hunger/1),
-			listing(player_point/2),
-			listing(player_inventory/1),
-			listing(player_weapon/1),
-			listing(enemy_list/1),
-			listing(enemy_point/2),
-			listing(weapon_list/1),
-			listing(water_list/1),
-			listing(food_list/1),
-			listing(medicine_list/1),
-			listing(game_state/1),
-			told, tell(V).
-		aload(F) :-
-			retract_all,
-			seeing(V), see(F),
-			repeat,
-			read(Data),
-			process(Data),
-			seen,
-			see(V),
-			!.
-		process(end_of_file) :- !.
-		process(Data) :- 
-			asserta(Data), 
+		/* Print object which has same point with player */
+		print_object_on_player :-
+			food_list(Foods),
+			print_object_on_player(Foods),
+			medicine_list(Medicines),
+			print_object_on_player(Medicines),
+			water_list(Water),
+			print_object_on_player(Water),
+			weapon_list(Weapons),
+			print_object_on_player(Weapons),
+			enemy_list(Enemies),
+			print_enemy_on_player(Enemies).
+		print_object_on_player([]) :- !.
+		print_object_on_player([Object|List]) :-
+			object_point(Object, Point),
+			player_point(Row, Column),
+			is_coor_equal(Point, [Row, Column]),
+			object_name(Object, Name),
+			object_effect(Object, Effect),
+			write(Name), write(' | '), write('Effect: '), write(Effect), nl,
 			fail.
+		print_object_on_player([Object|List]) :-
+			print_object_on_player(List).
+		print_enemy_on_player([Enemy|Enemies]) :-
+			enemy_point(Enemy, Point),
+			player_point(Row, Column),
+			is_coor_equal(Point, [Row, Column]),
+			enemy_name(Enemy, Name),
+			enemy_health(Enemy, Health),
+			write(Name), write(' | '), write('Health: '), write(Health), nl,
+			fail.
+		print_enemy_on_player([Enemy|Enemies]) :-
+			print_enemy_on_player(Enemies).
+		/* Universal Getter Point */
+		object_point(Object, Point) :-
+			nth0(2, Object, Point).
+		object_effect(Object, Effect) :-
+			nth0(1, Object, Effect).
+		object_name(Object, Name) :-
+			nth0(0, Object, Name).
 
 /* Primitif Map Game*/
 	/*Inisialisasi Baris (Fakta Baris)*/
@@ -249,11 +252,11 @@
 	/*Print Peta*/
 	print_matriks([]) :- !.
 	print_matriks([A|B]) :-
-	 	print_bar(A),
-	 	print_matriks(B), !.
+		print_bar(A),
+		print_matriks(B), !.
 	print_bar([H|T]) :-
-	 	write(H),
-	 	print_bar(T), !.
+		write(H),
+		print_bar(T), !.
 	print_bar([]) :- nl, !.
 	/* Reset map and put all of game objects on the map */
 	redraw_map :-
@@ -263,6 +266,7 @@
 		put_enemies.
 	redraw_look :-
 		reset_row(1, 11),
+		put_holes,
 		put_player,
 		put_weapons,
 		put_water,
@@ -297,20 +301,37 @@
 	/* Food Object */
 		food_power(30).
 		food_list([
-			[3,1],[7,1],[8,1],[5,5],
-			[5,7],[3,8],[2,10],[5,11],
-			[8,11],[7,14],[4,14],[2,15],
-			[4,17],[8,19],[5,20],[6,20]
+			['korea rice', 30, [3,1]],
+			['japan rice', 30, [7,1]],
+			['apple', 30, [8,1]],
+			['dragon egg', 30, [5,5]],
+			['kuro-kuro', 30, [5,7]],
+			['potato', 30, [3,8]],
+			['hambagu', 30, [2,10]],
+			['spaghetti', 30, [5,11]],
+			['lasagna', 30, [8,11]],
+			['dragon egg', 30, [7,14]],
+			['kuro-kuro', 30, [4,14]],
+			['mushroom', 30, [2,15]],
+			['apple', 30, [4,17]],
+			['japan rice', 30, [8,19]],
+			['korean rice', 30, [5,20]],
+			['hambagu', 30, [6,20]]
 			]).
 		set_foods(Foods) :-
 			retract(food_list(_)),
 			asserta(food_list(Foods)).
+		food_point(Food, Point) :-
+			nth0(2, Food, Point).
 		food_point(Food, X, Y) :-
-			nth0(0, Food, X),
-			nth0(1, Food, Y).
+			food_point(Food, Point),
+			nth0(0, Point, X),
+			nth0(1, Point, Y).
 		put_foods :-
 			food_list(Foods),
 			put_foods(Fodds).
+		food_name(Food, Name):-
+			nth0(0,Food, Name).
 		put_foods([]) :- !.
 		put_foods([F|Foods]) :-
 			food_point(F, X, Y),
@@ -328,16 +349,30 @@
 	/* Water Object */
 		water_power(30).
 		water_list([
-			[3,2],[9,1],[2,5],[6,7],
-			[8,10],[4,12],[5,12],[4,13],
-			[5,13],[2,17],[7,19],[7,20]
+			['holy water', 30, [3,2]],
+			['mineral water', 30, [9,1]],
+			['kangen water', 30, [2,5]],
+			['mineral water', 30, [6,7]],
+			['kangen water', 30, [8,10]],
+			['kangen water', 30, [4,12]],
+			['healty water', 30, [5,12]],
+			['lake water', 30, [4,13]],
+			['holy water', 30, [5,13]],
+			['holy water', 30, [2,17]],
+			['mineral water', 30, [7,19]],
+			['healthy water', 30, [7,20]]
 			]).
 		set_water(Water) :-
 			retract(water_list(_)),
 			asserta(water_list(Water)).
+		water_point(Water, Point) :-
+			nth0(2, Water, Point).
 		water_point(Water, X, Y) :-
-			nth0(0, Water, X),
-			nth0(1, Water, Y).
+			water_point(Water, Point),
+			nth0(0, Point, X),
+			nth0(1, Point, Y).
+		water_name(Water, Name) :-
+			nth0(0, Water, Name).
 		put_water :-
 			water_list(Water),
 			put_water(Water).
@@ -358,16 +393,27 @@
 	/* Medicine Object */
 		medicine_power(40).
 		medicine_list([
-			[2,3],[8,4],[10,6],
-			[6,8],[9,10],[3,11],
-			[5,15],[9,15],[2,20]
+			['panadol', 40, [2,3]],
+			['betadine', 40, [8,4]],
+			['oskadon', 40, [10,6]],
+			['anti-biotic', 40, [6,8]],
+			['paracetamol', 40, [9,10]],
+			['madu rasa', 40, [3,11]],
+			['panadol', 40, [5,15]],
+			['oskadon', 40, [9,15]],
+			['tango', 40, [2,20]]
 			]).
 		set_medicines(Medicines) :-
 			retract(medicine_list(_)),
 			asserta(medicine_list(Medicines)).
+		medicine_point(Medicine, Point) :-
+			nth0(2, Medicine, Point).
 		medicine_point(Medicine, X, Y) :-
-			nth0(0, Medicine, X),
-			nth0(1, Medicine, Y).
+			medicine_point(Medicine, Point),
+			nth0(0, Point, X),
+			nth0(1, Point, Y).
+		medicine_name(Medicine, Name) :-
+			nth0(0, Medicine, Name).
 		put_medicines :-
 			medicine_list(Medicines),
 			put_medicines(Medicines).
@@ -389,12 +435,12 @@
 		weapon_list([
 			['kertas ridus', 10, [5,1]],
 			['kertas rius', 20, [1,3]],
-			['kertas risaikel', 30, [5,8]],
-			['kerang ajaib', 40, [7,10]],
-			['tabel parser', 50, [6,12]],
-			['sepuluh tubes', 60, [9,16]],
-			['sepanci micin', 70, [10,19]],
-			['buku kalkulus', 80, [8,20]],
+			['kanya', 30, [5,8]],
+			['yasha', 40, [7,10]],
+			['micin panas', 50, [6,12]],
+			['axe of toobes', 60, [9,16]],
+			['trisula of poseidon', 70, [10,19]],
+			['book of sadiku', 80, [8,20]],
 			['tiang listrik', 90, [1,20]]
 			]).
 		weapon(Name, Weapon) :-
@@ -437,7 +483,6 @@
 		is_player_on_weapon([_|Weapons]) :-
 			is_player_on_weapon(Weapons).
 		status_weapon(Weapon) :-
-			nl,
 			weapon_damage(Weapon, Damage),
 			write(Damage),
 			write(' Damage\n').
@@ -468,7 +513,7 @@
 			put_holes(Holes).
 		is_object_on_hole(Point) :-
 			hole_list(Holes),
-			is_object_on_hole(Holes, Point), !.
+			is_object_on_hole(Holes, Point).
 		is_object_on_hole([], Point) :- !, fail.
 		is_object_on_hole([Hole|Holes], Point) :-
 			hole_point(Hole, Row, Column),
@@ -509,16 +554,18 @@
 			append([E],DRes,Res).
 		set_point(Enemy, Point, DEnemy) :-
 			change(Enemy, 4, Point, DEnemy).
-		enemy_point(Enemy, Point) :-
-			nth0(3, Enemy, Point).
 		enemy_point(Enemy, X, Y) :-
 			enemy_point(Enemy, Point),
 			nth0(0, Point, X),
 			nth0(1, Point, Y).
-		enemy_damage(Enemy, Damage) :-
-			nth0(2, Enemy, Damage).
 		enemy_name(Enemy, Name) :-
 			nth0(0, Enemy, Name).
+		enemy_health(Enemy, Health) :-
+			nth0(1, Enemy, Health).
+		enemy_damage(Enemy, Damage) :-
+			nth0(2, Enemy, Damage).
+		enemy_point(Enemy, Point) :-
+			nth0(3, Enemy, Point).
 		enemy_id(Enemy, Id) :-
 			nth0(4, Enemy, Id).
 		enemy_atacked([Enemy|Rest]):- 
@@ -606,6 +653,11 @@
 			write('You are attacked by '),
 			write(Name),
 			nl,
+			write('Damaged '), 
+			write(Damage),
+			write(' Points | Current Health '),
+			write(Health),
+			nl,
 			validate_player.
 		move_enemy(Enemy, Direction) :-
 			Direction == 0,
@@ -647,7 +699,7 @@
 		player_point(1,1).
 		player_inventory([]).
 		player_capacity(5).
-		player_weapon([a,10]).
+		player_weapon([0, 0, 0]).
 		set_player_health(Health) :-
 			retract(player_health(_)),
 			asserta(player_health(Health)).
@@ -669,29 +721,30 @@
 		put_player :-
 			player_point(X, Y),
 			set_map_el(X, Y, 'P').
-		take_item(Item, Type) :-
-			Type == 'F',
+		take_item(Item, 'F') :-
 			write('Food has been taken.'),
 			nl,
 			fail.
-		take_item(Item, Type) :-
-			Type == 'W',
+		take_item(Item, 'W') :-
 			write('Water has been taken.'),
 			nl,
 			fail.
-		take_item(Item, Type) :-
-			Type == '#',
+		take_item(Item, '#') :-
 			write('Weapon has been taken.'),
 			nl,
 			fail.
-		take_item(Item, Type) :-
+		take_item(Item, 'M') :-
+			write('Medicine has been taken.'),
+			nl,
+			fail.
+		take_item(Item, _) :-
 			player_inventory(Inventory),	
 			player_capacity(Capacity),
 			length(Inventory, Len),
 			Len < Capacity,
 			set_player_inventory([Item|Inventory]),
 			!.
-		take_item(Item) :-
+		take_item(Item, _) :-
 			write('Your inventory is full.\n').
 		validate_player :-
 			player_health(Health),
@@ -700,8 +753,10 @@
 		validate_player.
 		validate_player_pos(Point) :-
 			is_object_on_hole(Point),
+			!,
 			set_player_health(0),
-			set_state(2).
+			set_state(2),
+			write('You fell into a hole.'), nl.
 		validate_player_pos(Point).
 		status_inventory([]) :- !.
 		status_inventory([Item|Inventory]) :-
@@ -732,6 +787,7 @@
 			write(' has been dropped.'),
 			nl.
 		drop_item(Item, Point, '#') :-
+			write('==================================='), nl,
 			weapon_list(Weapons),
 			weapon_name(Item, Name),
 			weapon_damage(Item, Damage),
@@ -774,23 +830,29 @@
 			write(Power),
 			nl,
 			!.
+		item_type(Item, Type) :-
+			nth0(2, Item, Type).
 		search_inventory(Name, Item) :-
 			player_inventory(Inventory),
-			search_inventory(Name, Inventory).
+			search_inventory(Name, Inventory, Item).
 		search_inventory(Name, [], Item) :- !, fail.
-		search_inventory(Name, [Item|Inventory], Item) :- !.
+		search_inventory(0, [Item|Inventory], Item) :- !.
 		search_inventory(Name, [Search|Inventory], Item) :-
 			nth0(0, Search, NameItem),
 			Name == NameItem, 
-			search_inventory(Name, [Search|Inventory], Search).
+			search_inventory(0, [Search|Inventory], Item).
 		search_inventory(Name, [Search|Inventory], Item) :-
 			search_inventory(Name, Inventory, Item).
 		add_inventory(Item) :-
+			nth0(0, Item, Name),
+			Name \== 0,
 			player_inventory(Inventory),
-			set_player_inventory(Item, [Item|Inventory]).
+			set_player_inventory([Item|Inventory]).
+		add_inventory(_).
 		del_inventory(Item) :-
 			player_inventory(Inventory),
-			del_inventory(Item, Inventory, NewInventory).
+			del_inventory(Item, Inventory, NewInventory),
+			set_player_inventory(NewInventory).
 		del_inventory(Item, [Item|Inventory], Inventory) :- !.
 		del_inventory(Item, [Search|Inventory], NewInventory) :-
 			del_inventory(Item, Inventory, [Search|NewInventory]).
@@ -825,44 +887,57 @@
 		validate_running,
 		trigger_enemy,
 		redraw_look,
+		!,
 		player_point(Row,Column),
 		MinBrs is Row-1 ,
 		MaxBrs is Row+1 , 
 		MinKol is Column-1 ,
 		MaxKol is Column+1 , 
-		print_batas_mapk(MinBrs,MaxBrs,MinKol,MaxKol).
+		print_batas_mapk(MinBrs,MaxBrs,MinKol,MaxKol),
+		nl,
+		write('Close Object:'),
+		nl,
+		print_object_on_player.
 	s :- 
 		validate_running,
 		trigger_enemy,
+		!,
 		player_point(Row,Column),
 		Row < 10,
 		Brs is Row+1,
 		set_player_point(Brs, Column),
+		!,
 		validate_player_pos([Brs, Column]).
 	n :- 
 		validate_running,
 		trigger_enemy,
+		!,
 		player_point(Row,Column),
 		Row > 1,
 		Brs is Row-1,
 		set_player_point(Brs, Column),
+		!,
 		validate_player_pos([Brs, Column]).
 	e :- 
 		validate_running,
 		trigger_enemy,
+		!,
 		player_point(Row,Column),
 		Column < 20,
 		Kol is Column+1,
 		set_player_point(Row, Kol),
-		validate_player_pos([Brs, Column]).
+		!,
+		validate_player_pos([Row, Kol]).
 	w :- 
 		validate_running,
 		trigger_enemy,
+		!,
 		player_point(Row,Column),
 		Column > 1,
 		Kol is Column-1,
 		set_player_point(Row, Kol),
-		validate_player_pos([Brs, Column]).
+		!,
+		validate_player_pos([Row, Kol]).
 	map :-
 		validate_running,
 		redraw_map,
@@ -874,13 +949,13 @@
 		fail.
 	take(Name) :-
 		validate_running,
+		player_point(PRow, PCol),
 		search_object(Name, Item, Type),
-		object_point(Item, Type, Point),
-		player_point(PlayerPoint),
-		is_coor_equal(Point, PlayerPoint), 
+		object_point(Item, Point),
+		is_coor_equal(Point, [PRow, PCol]), 
 		del_object(Item, Type),
 		format_item(Item, Type, FItem),
-		take_item(FItem).
+		take_item(FItem, Type), !.
 	take(Object) :-
 		validate_running,
 		write('No item found.\n').
@@ -903,7 +978,7 @@
 		write('Health    : '), write(Health), nl,
 		write('Hunger    : '), write(Hunger), nl,
 		write('Thirst    : '), write(Thirst), nl,
-		write('Weapon    : '), status_weapon(Weapon), nl,
+		write('Weapon    : '), status_weapon(Weapon),
 		write('Inventory : '), status_inventory(Inventory), nl.
 	drop(Name) :-
 		validate_running,
@@ -911,9 +986,10 @@
 		fail.
 	drop(Name) :-
 		search_inventory(Name, Item),
+		item_type(Item, Type),
 		del_inventory(Item),
-		player_point(Point),
-		drop_item(Item, Point, Type).
+		player_point(Row, Column),
+		drop_item(Item, [Row, Column], Type).
 	drop(Name) :-
 		write('Not found in your inventory.'),
 		nl.
@@ -926,3 +1002,34 @@
 		write('Salah Blog\n'),
 		!,
 		fail.
+	/* Save and Load Game */
+		save(F) :-
+			telling(V), tell(F),
+			listing(peta/1),
+			listing(baris/2),
+			listing(player_health/1),
+			listing(player_hunger/1),
+			listing(player_point/2),
+			listing(player_inventory/1),
+			listing(player_weapon/1),
+			listing(enemy_list/1),
+			listing(enemy_point/2),
+			listing(weapon_list/1),
+			listing(water_list/1),
+			listing(food_list/1),
+			listing(medicine_list/1),
+			listing(game_state/1),
+			told, tell(V).
+		aload(F) :-
+			retract_all,
+			seeing(V), see(F),
+			repeat,
+			read(Data),
+			process(Data),
+			seen,
+			see(V),
+			!.
+		process(end_of_file) :- !.
+		process(Data) :- 
+			asserta(Data), 
+			fail.
