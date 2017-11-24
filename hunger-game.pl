@@ -222,8 +222,10 @@
 		append(U,[L],M), !.
 	/*Init Peta*/
 	init_map:-
-		create_map(12,M),
 		retract(peta(_)),
+		fail.
+	init_map:-
+		create_map(12,M),
 		asserta(peta(M)),!.
 	/*Update Peta setelah terjadi perubahan*/
 	update_map :-  
