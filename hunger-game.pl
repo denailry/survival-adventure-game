@@ -150,6 +150,14 @@
 		put_player,
 		hole_list(Holes),
 		put_holes(Holes),
+		food_list(Food),
+		put_foods(Food),
+		water_list(Water),
+		put_water(Water),
+		medicine_list(Medicine),
+		put_medicines(Medicine),
+		weapon_list(Weapon),
+		put_weapons(Weapon),
 		enemy_list(Enemies),
 		put_enemies(Enemies).
 	reset_row(MinNumber, MinNumber) :-
@@ -180,17 +188,31 @@
 	/* Food Object */
 		food_power(30).
 		food_list([
-			[3,1],[7,1],[8,1],[5,5],
-			[5,7],[3,8],[2,10],[5,11],
-			[8,11],[7,14],[4,14],[2,15],
-			[4,17],[8,19],[5,20],[6,20]
+			[[3,1],'korea rice'],
+			[[7,1],'japan rice'],
+			[[8,1],'apple'],
+			[[5,5],'dragon egg'],
+			[[5,7],'kuro-kuro'],
+			[[3,8],'potato'],
+			[[2,10],'hambagu'],
+			[[5,11],'spaghetti'],
+			[[8,11],'lasagna'],
+			[[7,14],'dragon egg'],
+			[[4,14],'kuro - kurp'],
+			[[2,15],'mushroom'],
+			[[4,17],'apple'],
+			[[8,19],'japan rice'],
+			[[5,20],'korean rice'],
+			[[6,20],'hambagu']
 			]).
 		set_foods(Foods) :-
 			retract(food_list(_)),
 			asserta(food_list(Foods)).
 		food_point(Food, X, Y) :-
-			nth0(0, Food, X),
-			nth0(1, Food, Y).
+			nth0(0, Food, Point),
+			Point = [X,Y].
+		food_name(Food,Name):-
+			nth0(2,Food,Name).
 		put_foods([]) :- !.
 		put_foods([F|Foods]) :-
 			food_point(F, X, Y),
@@ -205,19 +227,43 @@
 		is_player_on_food([_|Foods]) :-
 			is_player_on_food(Foods).
 
+		search_food([],Name,Point,[]) :- 
+			!.
+		search_food([H|T],Name,Point,L):- 
+			H=[P,N] ,
+			N == Name , 
+			P == Point,
+			L = H , 
+			!.
+		search_food([H|T],Name,Point,L):- 
+			search_food(T,Name,Point,Z) , 
+			Z=L , 
+			!.
+
 	/* Water Object */
 		water_power(30).
 		water_list([
-			[3,2],[9,1],[2,5],[6,7],
-			[8,10],[4,12],[5,12],[4,13],
-			[5,13],[2,17],[7,19],[7,20]
+			[[3,2],'kangen water'],
+			[[9,1],'holy water'],
+			[[2,5],'mineral water'],
+			[[6,7],'mineral water'],
+			[[8,10],'kangen water'],
+			[[4,12],'kangen water'],
+			[[5,12],'healty water'],
+			[[4,13],'lake water'],
+			[[5,13],'holy water'],
+			[[2,17],'holy water'],
+			[[7,19],'mineral water'],
+			[[7,20],'healthy water']
 			]).
 		set_water(Water) :-
 			retract(water_list(_)),
 			asserta(water_list(Water)).
 		water_point(Water, X, Y) :-
-			nth0(0, Water, X),
-			nth0(1, Water, Y).
+			nth0(0, Water, Point),
+			Point = [X,Y].
+		water_name(Water,Name):-
+			nth0(2,Water,Name).
 		put_water([]) :- !.
 		put_water([W|Water]) :-
 			water_point(W, X, Y),
@@ -232,19 +278,40 @@
 		is_player_on_water([_|Waters]) :-
 			is_player_on_water(Waters).
 
+		search_water([],Name,Point,[]) :- 
+			!.
+		search_water([H|T],Name,Point,L):- 
+			H=[P,N] ,
+			N == Name , 
+			P == Point,
+			L = H , 
+			!.
+		search_water([H|T],Name,Point,L):- 
+			search_food(T,Name,Point,Z) , 
+			Z=L , 
+			!.
+		
 	/* Medicine Object */
 		medicine_power(40).
 		medicine_list([
-			[2,3],[8,4],[10,6],
-			[6,8],[9,10],[3,11],
-			[5,15],[9,15],[2,20]
+			[[2,3],'panadol'],
+			[[8,4],'betadine'],
+			[[10,6],'oskadon'],
+			[[6,8],'anti-biotic'],
+			[[9,10],'paracetamol'],
+			[[3,11],'madu rasa'],
+			[[5,15],'panadol'],
+			[[9,15],'oskadon'],
+			[[2,20],'tango']
 			]).
 		set_medicines(Medicines) :-
 			retract(medicine_list(_)),
 			asserta(medicine_list(Medicines)).
 		medicine_point(Medicine, X, Y) :-
-			nth0(0, Medicine, X),
-			nth0(1, Medicine, Y).
+			nth0(0, Medicine, Point),
+			Point = [X,Y].
+		medicine_name(Medicine,Name):-
+			nth0(2,Medicine,Name).
 		put_medicines([]) :- !.
 		put_medicines([M|Medicines]) :-
 			medicine_point(M, X, Y),
@@ -258,37 +325,47 @@
 			!.
 		is_player_on_medicine([_|Medicines]) :-
 			is_player_on_medicine(Medicines).
-
+		search_medicine([],Name,Point,[]) :- 
+			!.
+		search_medicine([H|T],Name,Point,L):- 
+			H=[P,N] ,
+			N == Name , 
+			P == Point,
+			L = H , 
+			!.
+		search_medicine([H|T],Name,Point,L):- 
+			search_food(T,Name,Point,Z) , 
+			Z=L , 
+			!.
 	/* Weapon Object */
 		weapon_list([
-			[1, 10, [5,1]],
-			[2, 20, [1,3]],
-			[3, 30, [5,8]],
-			[4, 40, [7,10]],
-			[5, 50, [6,12]],
-			[6, 60, [9,16]],
-			[7, 70, [10,19]],
-			[8, 80, [8,20]],
-			[9, 90, [1,20]]
+			[10, [5,1],'catapult'],
+			[20, [1,3],'axe'],
+			[30, [5,8],'kanya'],
+			[40, [7,10],'yasha'],
+			[50, [6,12],'daedalus'],
+			[60, [9,16],'monkey king bar'],
+			[70, [10,19],'trisula of poseidon'],
+			[80, [8,20],'divine rapier'],
+			[90, [1,20],'book of sadiku']
 			]).
 		set_weapons(Weapons) :-
 			retract(weapon_list(_)),
 			asserta(weapon_list(Weapons)).
-		weapon_point(Weapon, Point) :-
-			nth0(2, Weapon, Point).
+		weapon_point(Weapon, X , Y) :-
+			nth0(1, Weapon, Point),
+			Point = [X,Y].
 		weapon_damage(Weapon, Damage) :-
-			nth0(1, Weapon, Damage).
+			nth0(0, Weapon, Damage).
 		put_weapons([]) :- !.
 		put_weapons([W|Weapons]) :-
-			weapon_point(W,Point),
-			Point = [X,Y],
+			weapon_point(W,X,Y),
 			set_map_el(X, Y, '#'),
 			put_weapons(Weapons).
 		is_player_on_weapon([]) :- !, fail.
 		is_player_on_weapon([Weapon|_]) :-
 			player_point(PRow, PColumn),
-			weapon_point(Weapon, Point),
-			Point = [Row,Column],
+			weapon_point(Weapon , Row , Column),
 			is_coor_equal([PRow,PColumn],[Row,Column]), 
 			!.
 		is_player_on_weapon([_|Weapons]) :-
@@ -298,7 +375,18 @@
 			weapon_damage(Weapon, Damage),
 			write(Damage),
 			write(' Damage\n').
-
+		search_weapon([],Name,Point,[]) :- 
+			!.
+		search_weapon([H|T],Name,Point,L):- 
+			H=[_,P,N] ,
+			N == Name , 
+			P == Point,
+			L = H , 
+			!.
+		search_weapon([H|T],Name,Point,L):- 
+			search_weapon(T,Name,Point,Z) , 
+			Z=L , 
+			!.
 	/* Setter Getter List of Holes */
 		hole_list([
 			[5,4],[6,4],[9,4],[9,5],
@@ -538,19 +626,37 @@
 			Health =< 0,
 			set_state(2).
 		status_inventory([]) :- !.
-		status_inventory([Item|Inventory]) :-
-			write(Item), write(' '),
+		status_inventory([Object|Inventory]) :-
+			Object = [ItemName|_],
+			write(ItemName), write(' | '),
 			status_inventory(Inventory).
-		drop_item(Item) :-
+		search_inventory([],X,[]):-!.
+		search_inventory([H|T],X,Obj):-
+			H = [ItemName|_],
+			ItemName == X,
+			Obj = H,
+			!.
+		search_inventory([H|T],X,Obj):-
+			search_inventory(T,X,Z),
+			Obj = Z,
+			!.
+		drop_item(Obj) :-
 			player_inventory(Inventory),
 			length(Inventory, Len),
 			Len > 0,
-			select(Item,Inventory,LAfter),
+			select(Obj,Inventory,LAfter),
 			set_player_inventory(LAfter),
 			!.
 		drop_item(Item) :- 
 			!, 
 			fail.
+
+		look_food :-
+			food_list(Food), 
+			player_point(X,Y),
+			Point = [X,Y],
+			search_food(Food,_,Point,L),
+			L /== [] 
 
 /*Command-Command utama*/
 	start:- 
@@ -623,48 +729,61 @@
 	take(Object) :-
 		validate_running,
 		trigger_enemy,
-		Object == 'M',
+		player_point(X,Y),
+		Point = [X,Y],
 		medicine_list(Medicines),
 		is_player_on_medicine(Medicines),
-		take_item('M'),
-		player_point(X,Y),
-		select([X,Y],Medicines,LAfter),
+		search_medicine(Medicines,Object,Point,Temp),
+		Temp \== [] ,
+		Item = [Object,'M'],
+		take_item(Item),
+		select([[X,Y],Object],Medicines,LAfter),
 		set_medicines(LAfter),
 		write('Medicine has been taken.\n'),
 		!.
 	take(Object) :-
 		validate_running,
 		trigger_enemy,
-		Object == 'F',
+		player_point(X,Y),
+		Point = [X,Y],
 		food_list(Foods),
 		is_player_on_food(Foods),
-		take_item('F'), 
-		player_point(X,Y),
-		select([X,Y],Foods,LAfter),
+		search_food(Foods,Object,Point,Temp),
+		Temp \== [] ,
+		Item = [Object,'F'],
+		take_item(Item), 
+		select([[X,Y],Object],Foods,LAfter),
 		set_foods(LAfter),
 		write('Food has been taken.\n'),
 		!.
 	take(Object) :-
 		validate_running,
 		trigger_enemy,
-		Object == 'W',
+		player_point(X,Y),
+		Point = [X,Y],
 		water_list(Water),
 		is_player_on_water(Water),
-		take_item('W'),
-		player_point(X,Y),
-		select([X,Y],Water,LAfter),
+		search_water(Water,Object,Point,Temp),
+		Temp \== [] ,
+		Item = [Object,'W'],
+		take_item(Item),
+		select([[X,Y],Object],Water,LAfter),
 		set_water(LAfter), 
 		write('Water has been taken.\n'),
 		!.
 	take(Object) :-
 		validate_running,
 		trigger_enemy,
-		Object == '#',
+		player_point(X,Y),
+		Point = [X,Y],
 		weapon_list(Weapons),
 		is_player_on_weapon(Weapons),
-		take_item('#'),
-		player_point(X,Y),
-		select([_,_,[X,Y]],Weapons,LAfter),
+		search_weapon(Weapons,Object,Point,Temp),
+		Temp \== [] ,
+		Temp = [Damage,P,_],
+		Item = [Object,Damage,'#'],
+		take_item(Item),
+		select([_,[X,Y],Object],Weapons,LAfter),
 		set_weapons(LAfter),
 		write('Weapon has been taken.\n'),
 		!.
@@ -734,64 +853,67 @@
 		write('Thirst    : '), write(Thirst), nl,
 		write('Weapon    : '), status_weapon(Weapon), nl,
 		write('Inventory : '), status_inventory(Inventory), nl.
-	drop(Object) :-
-		Object == 'M',
-		medicine_list(Medicines),
-		is_player_on_medicine(Medicines),
-		drop_item('M'),
-		player_point(X,Y),
-		select([X,Y],Medicines,LAfter),
-		set_medicines(LAfter),
-		write('Medicine has been dropped.\n'),
-		!.
-	drop(Object) :-
-		Object == 'F',
+
+	drop(Name) :-
+		validate_running,
+		trigger_enemy,
 		player_inventory(Inventory),
-		food_list(Foods),
-		member(Object,Inventory),
-		drop_item('F'), 
-		player_point(X,Y),
-		set_foods([[X,Y]|Foods]),
-		write('Food has been dropped.\n'),
-		!.
-	drop(Object) :-
-		Object == 'W',
-		player_inventory(Inventory),
+		search_inventory(Invetory,Name,Obj),
+		Obj = [ItemName,Kode],
+		Kode == 'W',	
 		water_list(Water),
-		member(Object,Inventory),
-		drop_item('W'), 
+		drop_item(Obj), 
 		player_point(X,Y),
-		set_water([[X,Y]|Water]),
+		set_water([[[X,Y],ItemName]|Water]),
 		write('Water has been dropped.\n'),
 		!.
-	drop(Object) :-
-		Object == '#',
+	drop(Name) :-
+		validate_running,
+		trigger_enemy,
 		player_inventory(Inventory),
-		weapon_list(Weapons),
-		member(Object,Inventory),
-		drop_item('#'), 
+		search_inventory(Invetory,Name,Obj),
+		Obj = [ItemName,Kode],
+		Kode == 'M',	
+		medicine_list(Medicine),
+		drop_item(Obj), 
 		player_point(X,Y),
-		set_weapons([[[X,Y]]|Weapons]),
+		set_medicines([[[X,Y],ItemName]|Medicine]),
+		write('Medicine has been dropped.\n'),
+		!.
+	drop(Name) :-
+		validate_running,
+		trigger_enemy,
+		player_inventory(Inventory),
+		search_inventory(Invetory,Name,Obj),
+		Obj = [ItemName,Kode],
+		Kode == 'F',	
+		food_list(Food),
+		drop_item(Obj), 
+		player_point(X,Y),
+		set_foods([[[X,Y],Name]|Food]),
+		write('Food has been dropped.\n'),
+		!.
+	drop(Name) :-
+		validate_running,
+		trigger_enemy,
+		player_inventory(Inventory),
+		search_inventory(Invetory,Name,Obj),
+		Obj = [ItemName,Damage,Kode],
+		/*Kode == '#',	
+		weapon_list(Weapon),
+		drop_item(Obj), 
+		player_point(X,Y),*/
+		set_weapons([[Damage,[X,Y],Name]|Weapon]),
 		write('Weapon has been dropped.\n'),
 		!.
-	drop(Object) :-
-		Object == 'M',
-		player_inventory(Inventory),
-		medicine_list(Medicines),
-		member(Object,Inventory),
-		drop_item('M'), 
-		player_point(X,Y),
-		set_medicines([[X,Y]|Medicines]),
-		write('Medicines has been dropped.\n'),
-		!.
-	drop(Object) :-
+	drop(Name) :-
 		write('No object dropped.\n'),
 		!,
 		fail.
 	attack:- 
 		player_weapon([Name,_]),
 		Name \== "-",
-		enemy_atacked(enemy_list),
+		enemy_attacked(enemy_list),
 		!.
 	attack:- 
 		write('Salah Blog\n'),
