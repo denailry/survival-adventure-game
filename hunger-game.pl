@@ -101,13 +101,13 @@
 		search_object(Name, Item, '#') :-
 			weapon_list(Weapons),
 			search_object_list(Name, Weapons, Item), !.
-		search_object_list(0, [Item|List], Item) :- !.
-		search_object_list(Name, [], Item) :- !, fail.
+		search_object_list(0, [Item|_], Item) :- !.
+		search_object_list(_, [], _) :- !, fail.
 		search_object_list(Name, [Search|List], Item) :-
 			nth0(0, Search, NameItem),
 			Name == NameItem,
 			search_object_list(0, [Search|List], Item), !.
-		search_object_list(Name, [Search|List], Item) :-
+		search_object_list(Name, [_|List], Item) :-
 			search_object_list(Name, List, Item).
 		/* Universal delete object from map */
 		del_object(Object, 'F') :-
@@ -177,7 +177,7 @@
 			fail.
 		print_object_on_player.
 		print_object_on_player([]) :- !.
-		print_object_on_player([Object|List]) :-
+		print_object_on_player([Object|_]) :-
 			object_point(Object, Point),
 			player_point(Row, Column),
 			is_coor_equal(Point, [Row, Column]),
@@ -185,9 +185,9 @@
 			object_effect(Object, Effect),
 			write(Name), write(' | '), write('Effect: '), write(Effect), nl,
 			fail.
-		print_object_on_player([Object|List]) :-
+		print_object_on_player([_|List]) :-
 			print_object_on_player(List).
-		print_enemy_on_player([Enemy|Enemies]) :-
+		print_enemy_on_player([Enemy|_]) :-
 			enemy_point(Enemy, Point),
 			player_point(Row, Column),
 			is_coor_equal(Point, [Row, Column]),
@@ -195,7 +195,7 @@
 			enemy_health(Enemy, Health),
 			write(Name), write(' | '), write('Health: '), write(Health), nl,
 			fail.
-		print_enemy_on_player([Enemy|Enemies]) :-
+		print_enemy_on_player([_|Enemies]) :-
 			print_enemy_on_player(Enemies).
 		/* Universal Getter Point */
 		object_point(Object, Point) :-
@@ -298,7 +298,44 @@
 		print_batas_brs(MinBrs, MinKol,MaxKol), 
 		I is MinBrs +1 , 
 		print_batas_mapk(I , MaxBrs , MinKol,MaxKol),!.
-
+	print_where :- 
+		player_point(X,Y),
+		X =< 3,
+		Y =< 5,
+		print('You are in Siliwangi Jungle '),
+		!.
+	print_where :- 
+		player_point(X,Y),
+		X =< 3,
+		Y > 5 ,
+		print('You are in East Far'),
+		!.
+	print_where :- 
+		player_point(X,Y),
+		X > 3,
+		X =< 7,
+		Y =< 7,
+		print('You are in Telemountain'),
+		!.
+	print_where :- 
+		player_point(X,Y),
+		X > 3,
+		X =< 7,
+		Y > 7,
+		print('you are in Electric Field'),
+		!.
+	print_where :- 
+		player_point(X,Y),
+		X > 7,
+		Y =< 15,
+		print('You are in Friendzone Town'),
+		!.
+	print_where :- 
+		player_point(X,Y),
+		X > 7,
+		Y =< 15,
+		print('You are in Corruptor Camp'),
+		!.
 /* Primitif Object Game */
 	/* Food Object */
 		food_power(30).
@@ -331,7 +368,7 @@
 			nth0(1, Point, Y).
 		put_foods :-
 			food_list(Foods),
-			put_foods(Fodds).
+			put_foods(Foods).
 		food_name(Food, Name):-
 			nth0(0,Food, Name).
 		put_foods([]) :- !.
@@ -348,15 +385,15 @@
 		is_player_on_food([_|Foods]) :-
 			is_player_on_food(Foods).
 
-		search_food([],Name,Point,[]) :- 
+		search_food([],_,_,[]) :- 
 			!.
-		search_food([H|T],Name,Point,L):- 
+		search_food([H|_],Name,Point,L):- 
 			H=[P,N] ,
 			N == Name , 
 			P == Point,
 			L = H , 
 			!.
-		search_food([H|T],Name,Point,L):- 
+		search_food([_|T],Name,Point,L):- 
 			search_food(T,Name,Point,Z) , 
 			Z=L , 
 			!.
@@ -405,15 +442,15 @@
 		is_player_on_water([_|Waters]) :-
 			is_player_on_water(Waters).
 
-		search_water([],Name,Point,[]) :- 
+		search_water([],_,_,[]) :- 
 			!.
-		search_water([H|T],Name,Point,L):- 
+		search_water([H|_],Name,Point,L):- 
 			H=[P,N] ,
 			N == Name , 
 			P == Point,
 			L = H , 
 			!.
-		search_water([H|T],Name,Point,L):- 
+		search_water([_|T],Name,Point,L):- 
 			search_food(T,Name,Point,Z) , 
 			Z=L , 
 			!.
@@ -458,15 +495,15 @@
 			!.
 		is_player_on_medicine([_|Medicines]) :-
 			is_player_on_medicine(Medicines).
-		search_medicine([],Name,Point,[]) :- 
+		search_medicine([],_,_,[]) :- 
 			!.
-		search_medicine([H|T],Name,Point,L):- 
+		search_medicine([H|_],Name,Point,L):- 
 			H=[P,N] ,
 			N == Name , 
 			P == Point,
 			L = H , 
 			!.
-		search_medicine([H|T],Name,Point,L):- 
+		search_medicine([_|T],Name,Point,L):- 
 			search_food(T,Name,Point,Z) , 
 			Z=L , 
 			!.
@@ -485,14 +522,14 @@
 		weapon(Name, Weapon) :-
 			weapon_list(Weapons),
 			weapon(Weapons, Name, Weapon).
-		weapon([W|Weapons], Name, W) :- !.
-		weapon([], Name, W) :- !, fail.
-		weapon([W|Weapons], Name, Weapon) :-
+		weapon([W|_], _, W) :- !.
+		weapon([], _, _) :- !, fail.
+		weapon([W|Weapons], Name, _) :-
 			weapon_name(W, NameW),
-			NameW == NameWeapon,
+			NameW == Name,
 			weapon([W|Weapons], Name, W),
 			!.
-		weapon([W|Weapons], Name, Weapon) :-
+		weapon([_|Weapons], Name, Weapon) :-
 			weapon(Weapons, Name, Weapon).
 		set_weapons(Weapons) :-
 			retract(weapon_list(_)),
@@ -527,15 +564,15 @@
 			weapon_damage(Weapon, Damage),
 			write(Damage),
 			write(' Damage\n').
-		search_weapon([],Name,Point,[]) :- 
+		search_weapon([],_,_,[]) :- 
 			!.
-		search_weapon([H|T],Name,Point,L):- 
+		search_weapon([H|_],Name,Point,L):- 
 			H=[_,P,N] ,
 			N == Name , 
 			P == Point,
 			L = H , 
 			!.
-		search_weapon([H|T],Name,Point,L):- 
+		search_weapon([_|T],Name,Point,L):- 
 			search_weapon(T,Name,Point,Z) , 
 			Z=L , 
 			!.
@@ -566,12 +603,12 @@
 		is_object_on_hole(Point) :-
 			hole_list(Holes),
 			is_object_on_hole(Holes, Point).
-		is_object_on_hole([], Point) :- !, fail.
-		is_object_on_hole([Hole|Holes], Point) :-
+		is_object_on_hole([], _) :- !, fail.
+		is_object_on_hole([Hole|_], Point) :-
 			hole_point(Hole, Row, Column),
 			is_coor_equal(Point,[Row,Column]), 
 			!.
-		is_object_on_hole([Hole|Holes], Point) :-
+		is_object_on_hole([_|Holes], Point) :-
 			is_object_on_hole(Holes, Point).
 	/* Enemy Object */
 		enemy(1, ['Goblin Kurus', 100, 10, [0,0], 1]).
@@ -596,7 +633,7 @@
 			enemy_id(E, EId), 
 			Id == EId,
 			append([Enemy],Enemies,Res),
-			enemy_name(Enemy, Name),
+			enemy_name(Enemy, _),
 			!.
 		set_enemy(Enemy, [E|Enemies],Res) :-
 			enemy_id(Enemy, Id),
@@ -629,7 +666,7 @@
 			C_Enemy = (It,[Name,Health_Att,Damage,[X,Y],Id]),
 			set_enemy(C_Enemy),
 			enemy_atacked(Rest).
-		enemy_atacked([Enemy|Rest]):-
+		enemy_atacked([_|Rest]):-
 			enemy_atacked(Rest).
 		enemy_atacked([]):- !.
 		
@@ -650,19 +687,19 @@
 			random(1, 10, DRow),
 			random(1, 20, DColumn),
 			init_enemy(N, DRow, DColumn, Enemy, Enemies).
-		init_enemy(N, Row, Column, Enemy, Enemies) :-
+		init_enemy(N, Row, Column, Enemy, _) :-
 			enemy(N, DEnemy),
 			change(DEnemy, 4, [Row,Column], Enemy).
 
 		/* Avoid same enemies location when initialization */ 
 		invalidate_init_pos(Point, []) :-
 			is_object_on_hole(Point).
-		invalidate_init_pos(Point, [Enemy|EnemyList]) :-
+		invalidate_init_pos(Point, [Enemy|_]) :-
 			enemy_point(Enemy, EnemyPoint),
 			is_coor_equal(Point, EnemyPoint),
 			nl,
 			!.
-		invalidate_init_pos(Point, [Enemy|EnemyList]) :-
+		invalidate_init_pos(Point, [_|EnemyList]) :-
 			invalidate_init_pos(Point, EnemyList).
 		/* Avoid enemy move to hole or boundaries */
 		validate_pos(X, Y) :-
@@ -674,7 +711,7 @@
 			put_enemies(Enemies).
 		put_enemies([]) :- !.
 		put_enemies([E|Enemies]) :-
-			length(Enemies, Len),
+			length(Enemies, _),
 			enemy_point(E, X, Y),
 			set_map_el(X, Y, 'E'),
 			put_enemies(Enemies).
@@ -773,19 +810,19 @@
 		put_player :-
 			player_point(X, Y),
 			set_map_el(X, Y, 'P').
-		take_item(Item, 'F') :-
+		take_item(_, 'F') :-
 			write('Food has been taken.'),
 			nl,
 			fail.
-		take_item(Item, 'W') :-
+		take_item(_, 'W') :-
 			write('Water has been taken.'),
 			nl,
 			fail.
-		take_item(Item, '#') :-
+		take_item(_, '#') :-
 			write('Weapon has been taken.'),
 			nl,
 			fail.
-		take_item(Item, 'M') :-
+		take_item(_, 'M') :-
 			write('Medicine has been taken.'),
 			nl,
 			fail.
@@ -796,7 +833,7 @@
 			Len < Capacity,
 			set_player_inventory([Item|Inventory]),
 			!.
-		take_item(Item, _) :-
+		take_item(_, _) :-
 			write('Your inventory is full.\n').
 		validate_player :-
 			player_health(Health),
@@ -809,7 +846,7 @@
 			set_player_health(0),
 			set_state(2),
 			write('You fell into a hole.'), nl.
-		validate_player_pos(Point).
+		validate_player_pos(_).
 		status_inventory([]) :- !.
 		status_inventory([Object|Inventory]) :-
 			Object = [ItemName|_],
@@ -857,7 +894,7 @@
 			nth0(1, Item, Damage),
 			write(Name), write(' is used.'), nl,
 			write('Current damage is '), write(Damage), nl.
-		use_item(Item, 'M') :-
+		use_item(_, 'M') :-
 			medicine_power(Power),
 			player_health(CurrentHealth),
 			Health is Power+CurrentHealth,
@@ -865,7 +902,7 @@
 			write('Increased health by '),
 			write(Power),
 			nl.
-		use_item(Item, 'W') :-
+		use_item(_, 'W') :-
 			water_power(Power),
 			player_thirst(CurrentThirst),
 			Thirst is Power+CurrentThirst,
@@ -873,7 +910,7 @@
 			write('Increased thirst by '),
 			write(Power),
 			nl.
-		use_item(Item, 'F') :-
+		use_item(_, 'F') :-
 			food_power(Power),
 			player_hunger(CurrentHunger),
 			Hunger is Power+CurrentHunger,
@@ -887,13 +924,13 @@
 		search_inventory(Name, Item) :-
 			player_inventory(Inventory),
 			search_inventory(Name, Inventory, Item).
-		search_inventory(Name, [], Item) :- !, fail.
-		search_inventory(0, [Item|Inventory], Item) :- !.
+		search_inventory(_, [], _) :- !, fail.
+		search_inventory(0, [Item|_], Item) :- !.
 		search_inventory(Name, [Search|Inventory], Item) :-
 			nth0(0, Search, NameItem),
 			Name == NameItem, 
 			search_inventory(0, [Search|Inventory], Item).
-		search_inventory(Name, [Search|Inventory], Item) :-
+		search_inventory(Name, [_|Inventory], Item) :-
 			search_inventory(Name, Inventory, Item).
 		add_inventory(Item) :-
 			nth0(0, Item, Name),
@@ -916,7 +953,8 @@
 		help,
 		set_state(1),
 		set_player_point(1,1),
-		init_enemies(10).
+		init_enemies(10),
+		read_command.
 	help :- 
 		write('Available commands:\n'),
 		write('start. -- start the game!\n'),
@@ -949,7 +987,9 @@
 		nl,
 		write('Close Object:'),
 		nl,
-		print_object_on_player.
+		print_object_on_player,
+		nl,
+		print_where.
 	s :- 
 		validate_running,
 		trigger_enemy,
@@ -959,7 +999,9 @@
 		Brs is Row+1,
 		set_player_point(Brs, Column),
 		!,
-		validate_player_pos([Brs, Column]).
+		validate_player_pos([Brs, Column]),
+		write('You are going to South ! '),
+		print_where.
 	n :- 
 		validate_running,
 		trigger_enemy,
@@ -969,7 +1011,9 @@
 		Brs is Row-1,
 		set_player_point(Brs, Column),
 		!,
-		validate_player_pos([Brs, Column]).
+		validate_player_pos([Brs, Column]),
+		write('You are going to North ! '),
+		print_where.
 	e :- 
 		validate_running,
 		trigger_enemy,
@@ -979,7 +1023,9 @@
 		Kol is Column+1,
 		set_player_point(Row, Kol),
 		!,
-		validate_player_pos([Row, Kol]).
+		validate_player_pos([Row, Kol]),
+		write('You are going to East ! '),
+		print_where.
 	w :- 
 		validate_running,
 		trigger_enemy,
@@ -989,13 +1035,15 @@
 		Kol is Column-1,
 		set_player_point(Row, Kol),
 		!,
-		validate_player_pos([Row, Kol]).
+		validate_player_pos([Row, Kol]),
+		write('You are going to West ! '),
+		print_where.
 	map :-
 		validate_running,
 		redraw_map,
 		peta(M), 
 		print_matriks(M), !.
-	take(Name) :-
+	take(_) :-
 		validate_running,
 		trigger_enemy,
 		fail.
@@ -1008,7 +1056,7 @@
 		del_object(Item, Type),
 		format_item(Item, Type, FItem),
 		take_item(FItem, Type), !.
-	take(Object) :-
+	take(_) :-
 		validate_running,
 		write('No item found.\n').
 	use(Name) :-
@@ -1018,7 +1066,7 @@
 		del_inventory(Item),
 		nth0(2, Item, Symbol),
 		use_item(Item, Symbol), !.
-	use(Name) :-
+	use(_) :-
 		write('Not found in inventory'), nl.
 	status :-
 		validate_running,
@@ -1032,7 +1080,7 @@
 		write('Thirst    : '), write(Thirst), nl,
 		write('Weapon    : '), status_weapon(Weapon),
 		write('Inventory : '), status_inventory(Inventory), nl.
-	drop(Name) :-
+	drop(_) :-
 		validate_running,
 		trigger_enemy,
 		fail.
@@ -1042,7 +1090,7 @@
 		del_inventory(Item),
 		player_point(Row, Column),
 		drop_item(Item, [Row, Column], Type).
-	drop(Name) :-
+	drop(_) :-
 		write('Not found in your inventory.'),
 		nl.
 	attack:- 
@@ -1085,3 +1133,24 @@
 		process(Data) :- 
 			asserta(Data), 
 			fail.
+	/* Looping */
+	read_command :-
+		game_state(1), 
+		nl,
+		write(>),
+		read(X) , 
+		kasus(X) ,
+		!.
+	read_command :-
+		!,
+		fail.
+	kasus(X) :-
+		X \== quit , 
+		X , 
+		read_command .
+	kasus(X) :- 
+		X == quit , 
+		set_state(0),
+		!.
+	kasus(_) :- 
+		read_command.
