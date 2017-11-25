@@ -19,6 +19,7 @@
 :- dynamic(food_list/1).
 :- dynamic(medicine_list/1).
 :- dynamic(game_state/1).
+:- dynamic(radar/1).
 /* Primitif Global */
 	/* Primitif List */
 		/*Ubah Isi List*/
@@ -101,6 +102,9 @@
 		search_object(Name, Item, '#') :-
 			weapon_list(Weapons),
 			search_object_list(Name, Weapons, Item), !.
+		search_object(Name, Item, 'R') :-
+			radar(Radars),
+			search_object_list(Name, Radars, Item).
 		search_object_list(0, [Item|List], Item) :- !.
 		search_object_list(Name, [], Item) :- !, fail.
 		search_object_list(Name, [Search|List], Item) :-
@@ -126,6 +130,10 @@
 			weapon_list(Weapons),
 			select(Object, Weapons, List),
 			set_weapons(List).
+		del_object(Object, 'R') :-
+			radar(Radars),
+			select(Object, Radars, List),
+			set_radar(List).
 		format_item(Item, Type, [Name, Power, Type]) :-
 			object_name(Item, Name),
 			object_effect(Item, Power).
@@ -174,6 +182,8 @@
 			print_object_on_player(Weapons),
 			enemy_list(Enemies),
 			print_enemy_on_player(Enemies),
+			radar(Radars),
+			print_object_on_player(Radars),
 			fail.
 		print_object_on_player.
 		print_object_on_player([]) :- !.
@@ -187,6 +197,7 @@
 			fail.
 		print_object_on_player([Object|List]) :-
 			print_object_on_player(List).
+		print_enemy_on_player([]) :- !.
 		print_enemy_on_player([Enemy|Enemies]) :-
 			enemy_point(Enemy, Point),
 			player_point(Row, Column),
@@ -265,6 +276,7 @@
 		reset_row(1,11),
 		put_player,
 		put_holes,
+		put_radar,
 		put_enemies.
 	redraw_look :-
 		reset_row(1, 11),
@@ -274,6 +286,7 @@
 		put_water,
 		put_foods,
 		put_medicines,
+		put_radar,
 		put_enemies.
 	reset_row(MinNumber, MinNumber) :-
 		init_map, !.
@@ -348,19 +361,6 @@
 		is_player_on_food([_|Foods]) :-
 			is_player_on_food(Foods).
 
-		search_food([],Name,Point,[]) :- 
-			!.
-		search_food([H|T],Name,Point,L):- 
-			H=[P,N] ,
-			N == Name , 
-			P == Point,
-			L = H , 
-			!.
-		search_food([H|T],Name,Point,L):- 
-			search_food(T,Name,Point,Z) , 
-			Z=L , 
-			!.
-
 	/* Water Object */
 		water_power(30).
 		water_list([
@@ -404,19 +404,6 @@
 			!.
 		is_player_on_water([_|Waters]) :-
 			is_player_on_water(Waters).
-
-		search_water([],Name,Point,[]) :- 
-			!.
-		search_water([H|T],Name,Point,L):- 
-			H=[P,N] ,
-			N == Name , 
-			P == Point,
-			L = H , 
-			!.
-		search_water([H|T],Name,Point,L):- 
-			search_food(T,Name,Point,Z) , 
-			Z=L , 
-			!.
 		
 	/* Medicine Object */
 		medicine_power(40).
@@ -458,18 +445,44 @@
 			!.
 		is_player_on_medicine([_|Medicines]) :-
 			is_player_on_medicine(Medicines).
-		search_medicine([],Name,Point,[]) :- 
-			!.
-		search_medicine([H|T],Name,Point,L):- 
-			H=[P,N] ,
-			N == Name , 
-			P == Point,
-			L = H , 
-			!.
-		search_medicine([H|T],Name,Point,L):- 
-			search_food(T,Name,Point,Z) , 
-			Z=L , 
-			!.
+
+	/* Radar Object */
+		radar([
+			['radar', 'reveal enemies position', [0,0]]
+			]).
+		set_radar(Radar) :-
+			retract(radar(_)),
+			asserta(radar(Radar)).
+		radar_point(Radar, X, Y) :-
+			nth0(2, Radar, Point),
+			nth0(0, Point, X),
+			nth0(1, Point, Y).
+		radar_name(Radar,Name):-
+			nth0(0,Radar,Name).
+		put_radar :-
+			radar(Radars),
+			put_radar(Radars).
+		put_radar([]) :- !.
+		put_radar([Radar|List]) :-
+			radar_point(Radar, X, Y),
+			set_map_el(X, Y, 'R').
+		is_player_on_radar([]) :- !, fail.
+		is_player_on_radar([Radar|_]) :-
+			player_point(PRow, PColumn),
+			radar_point(Radar, Row, Column),
+			is_coor_equal([PRow,PColumn],[Row,Column]), !.
+		is_player_on_radar([_|Radar]) :-
+			is_player_on_radar(Radar).
+		init_radar :-
+			random(1, 10, Row),
+			random(1, 20, Column),
+			\+is_object_on_hole([Row, Column]),
+			set_radar([
+				['radar', 0, [Row, Column]]
+				]), !.
+		init_radar :-
+			init_radar.
+
 	/* Weapon Object */
 		weapon_list([
 			['kertas ridus', 10, [5,1]],
@@ -527,18 +540,7 @@
 			weapon_damage(Weapon, Damage),
 			write(Damage),
 			write(' Damage\n').
-		search_weapon([],Name,Point,[]) :- 
-			!.
-		search_weapon([H|T],Name,Point,L):- 
-			H=[_,P,N] ,
-			N == Name , 
-			P == Point,
-			L = H , 
-			!.
-		search_weapon([H|T],Name,Point,L):- 
-			search_weapon(T,Name,Point,Z) , 
-			Z=L , 
-			!.
+
 	/* Setter Getter List of Holes */
 		hole_list([
 			[5,4],[6,4],[9,4],[9,5],
@@ -789,6 +791,10 @@
 			write('Medicine has been taken.'),
 			nl,
 			fail.
+		take_item(Item, 'R') :-
+			write('Radar has been taken.'),
+			nl,
+			fail.
 		take_item(Item, _) :-
 			player_inventory(Inventory),	
 			player_capacity(Capacity),
@@ -848,6 +854,12 @@
 			nth0(0, Item, Name),
 			write(Name),
 			write(' has been dropped.'),
+			nl.
+		drop_item(Item, Point, 'R') :-
+			radar(Radars),
+			append([['radar', 'reveal enemies position', Point]], Radars, List),
+			set_radar(List),
+			write('radar has been dropped.'),
 			nl.
 		use_item(Item, '#') :-
 			player_weapon(CurrentWeapon),
@@ -916,6 +928,7 @@
 		help,
 		set_state(1),
 		set_player_point(1,1),
+		init_radar,
 		init_enemies(10).
 	help :- 
 		write('Available commands:\n'),
@@ -990,11 +1003,19 @@
 		set_player_point(Row, Kol),
 		!,
 		validate_player_pos([Row, Kol]).
+	map :- 
+		validate_running, fail.
 	map :-
-		validate_running,
+		game_state(1),
+		search_inventory('radar', Item),
 		redraw_map,
+		init_radar,
 		peta(M), 
 		print_matriks(M), !.
+	map :-
+		game_state(1),
+		write('You have no radar in inventory'),
+		nl.
 	take(Name) :-
 		validate_running,
 		trigger_enemy,
@@ -1041,7 +1062,7 @@
 		item_type(Item, Type),
 		del_inventory(Item),
 		player_point(Row, Column),
-		drop_item(Item, [Row, Column], Type).
+		drop_item(Item, [Row, Column], Type), !.
 	drop(Name) :-
 		write('Not found in your inventory.'),
 		nl.
