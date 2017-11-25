@@ -482,7 +482,7 @@
 			!.
 		is_player_on_medicine([_|Medicines]) :-
 			is_player_on_medicine(Medicines).
-			
+
 	/* Radar Object */
 		radar([
 			['radar', 'reveal enemies position', [0,0]]
@@ -957,6 +957,28 @@
 		del_inventory(Item, [Item|Inventory], Inventory) :- !.
 		del_inventory(Item, [Search|Inventory], NewInventory) :-
 			del_inventory(Item, Inventory, [Search|NewInventory]).
+		attack_enemy(Enemies, Damage) :-
+			attack_enemy(Enemies, Damage, 0).
+		attack_enemy([], Damage, Number) :-Number > 0, !.
+		attack_enemy([], Damage, 0) :- !, fail.
+		attack_enemy([Enemy|Enemies], Damage, Number) :-
+			enemy_point(Enemy, Point),
+			player_point(Row, Column),
+			is_coor_equal(Point, [Row, Column]),
+			enemy_health(Enemy, Health),
+			CurrentHealth is Health-Damage,
+			CurrentNumber is Number+1,
+			change(Enemy, 1, CurrentHealth, CurrentEnemy),
+			set_enemy(Enemy),
+			enemy_name(Enemy, Name),
+			write(Name),
+			write(' current health is '),
+			write(CurrentHealth),
+			nl,
+			attack_enemy(Enemies, Damage, CurrentNumber),
+			!.
+		attack_enemy([Enemy|Enemies], Damage, Number) :-
+			attack_enemy(Enemies, Damage, Number).
 
 /*Command-Command utama*/
 	start :- 
@@ -1115,14 +1137,17 @@
 		write('Not found in your inventory.'),
 		nl.
 	attack:- 
-		player_weapon([Name,_]),
-		Name \== "-",
-		enemy_attacked(enemy_list),
+		player_weapon(Weapon),
+		weapon_damage(Weapon, Damage),
+		enemy_list(Enemies),
+		attack_enemy(Enemies, Damage),
+		write('Attacking all enemies by '),
+		write(Damage),
+		write(' damage.'),
+		nl,
 		!.
 	attack:- 
-		write('Salah Blog\n'),
-		!,
-		fail.
+		write('Attacking nobody.'), nl.
 	/* Save and Load Game */
 		save(F) :-
 			telling(V), tell(F),
