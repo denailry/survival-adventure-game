@@ -844,14 +844,16 @@
 		validate_player :-
 			player_health(Health),
 			Health =< 0,
-			set_state(2).
+			set_state(2),
+			write('You are death.'), nl.
 		validate_player.
 		validate_player_pos(Point) :-
 			is_object_on_hole(Point),
 			!,
 			set_player_health(0),
 			set_state(2),
-			write('You fell into a hole.'), nl.
+			write('You fell into a hole.'), nl,
+			write('You are death.'), nl.
 		validate_player_pos(_).
 		status_inventory([]) :- !.
 		status_inventory([Object|Inventory]) :-
@@ -1136,7 +1138,12 @@
 	drop(_) :-
 		write('Not found in your inventory.'),
 		nl.
+	attack :-
+		validate_running,
+		trigger_enemy,
+		fail.
 	attack:- 
+		game_state(1),
 		player_weapon(Weapon),
 		weapon_damage(Weapon, Damage),
 		enemy_list(Enemies),
@@ -1147,6 +1154,7 @@
 		nl,
 		!.
 	attack:- 
+		game_state(1),
 		write('Attacking nobody.'), nl.
 	/* Save and Load Game */
 		save(F) :-
